@@ -1,0 +1,4 @@
+librosa>=0.10.2.post1
+sounddevice>=0.4.7
+soundfile>=0.12.1
+numpy>=1.26.4
