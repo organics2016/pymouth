@@ -1,7 +1,7 @@
 import soundfile as sf
 import numpy as np
 import time
-from pymouth import AudioAnalyser
+from src.pymouth import AudioAnalyser
 
 
 def callback(y, data):

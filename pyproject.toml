@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pymouth"
+version = "0.0.1"
+authors = [
+    { name = "organics2016", email = "organics2015@outlook.com" },
+]
+description = "Live2D Mouth-sync artifact"
+readme = "README.md"
+license-files = { paths = ["LICENSE"] }
+requires-python = ">=3.10"
+dependencies = [
+    "librosa>=0.10.2.post1",
+    "sounddevice>=0.4.7",
+    "soundfile>=0.12.1",
+    "numpy>=1.26.4"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+    "Topic :: Software Development :: Libraries",
+]
+
+[project.urls]
+Homepage = "https://github.com/organics2016/pymouth"
+Documentation = "https://github.com/organics2016/pymouth"
+Source = "https://github.com/organics2016/pymouth"
+Issues = "https://github.com/organics2016/pymouth/issues"
+
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/tests",
+]
