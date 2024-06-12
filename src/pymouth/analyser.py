@@ -31,7 +31,6 @@ class AudioAnalyser:
 
     def __exit__(self, *args):
         pass
-        # self.close()
 
     def async_action(self):
         self.thread = Thread(target=self.sync_action)
@@ -48,29 +47,26 @@ class AudioAnalyser:
                 if isinstance(self.audio, np.ndarray):
                     datas = split_list_by_n(self.audio, self.block_size)
                     for data in datas:
-                        print(len(data))
-                        self.call(data, stream)
+                        self.__call(data, stream)
                 elif isinstance(self.audio, str):
                     with sf.SoundFile(self.audio) as f:
                         while True:
                             data = f.read(self.block_size, dtype=self.dtype)
-                            print(len(data))
                             if not len(data):
                                 break
-                            self.call(data, stream)
+                            self.__call(data, stream)
                 elif isinstance(self.audio, sf.SoundFile):
                     while True:
                         data = self.audio.read(self.block_size, dtype=self.dtype)
-                        print(len(data))
                         if not len(data):
                             break
-                        self.call(data, stream)
+                        self.__call(data, stream)
 
         else:
             if isinstance(self.audio, np.ndarray):
                 datas = split_list_by_n(self.audio, self.block_size)
                 for data in datas:
-                    self.call(data)
+                    self.__call(data)
 
             elif isinstance(self.audio, str):
                 with sf.SoundFile(self.audio) as f:
@@ -78,22 +74,22 @@ class AudioAnalyser:
                         data = f.read(self.block_size, dtype=self.dtype)
                         if not len(data):
                             break
-                        self.call(data)
+                        self.__call(data)
 
             elif isinstance(self.audio, sf.SoundFile):
                 while True:
                     data = self.audio.read(self.block_size, dtype=self.dtype)
                     if not len(data):
                         break
-                    self.call(data)
+                    self.__call(data)
 
-    def call(self, data: np.ndarray, stream: sd.OutputStream = None):
+    def __call(self, data: np.ndarray, stream: sd.OutputStream = None):
         if stream is not None:
             stream.write(data)
         self.callback(audio2db2(data), data)
 
 
-def audio2db2(audio_data: np.ndarray, sample_size: int = 60) -> float:
+def audio2db2(audio_data: np.ndarray, sample_size: int = 40) -> float:
     audio_data = channel_conversion(audio_data)
     # 计算频谱图
     spectrogram = librosa.stft(audio_data)
