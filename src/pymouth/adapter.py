@@ -54,6 +54,7 @@ class VTSAdapter:
     def __callback(self, y, data):
 
         async def dd():
+            print(y)
             await self.vts.request(
                 self.vts.vts_request.requestSetParameterValue(
                     parameter=self.mouth_bind_param,

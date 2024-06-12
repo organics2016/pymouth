@@ -2,6 +2,7 @@ import librosa
 import soundfile as sf
 import numpy as np
 import sounddevice as sd
+import random
 from threading import Thread
 
 
@@ -89,16 +90,19 @@ class AudioAnalyser:
         self.callback(audio2db2(data), data)
 
 
-def audio2db2(audio_data: np.ndarray, sample_size: int = 40) -> float:
+def audio2db2(audio_data: np.ndarray, sample_size: int = 100, frequency_reduction_probability: float = 0.25) -> float:
     audio_data = channel_conversion(audio_data)
     # 计算频谱图
     spectrogram = librosa.stft(audio_data)
     # print(spectrogram[0])
     # 将幅度转换为分贝
-    spectrogram_db = librosa.amplitude_to_db((np.abs(spectrogram)) ** 2)
-
+    spectrogram_db = librosa.amplitude_to_db((np.abs(spectrogram)))
+    # print(np.max(spectrogram_db))
+    # TODO 通过共振峰获取元音
+    # sss = librosa.db_to_power(spectrogram_db)
+    # print(np.max(sss))
     # 采样
-    spectrogram_db = spectrogram_db[0:len(audio_data):sample_size]
+    # spectrogram_db = spectrogram_db[0:len(audio_data):sample_size]
     # 采样出nan值统一为 最小分贝
     spectrogram_db = np.nan_to_num(spectrogram_db, nan=-100.0)
     # 标准化
@@ -107,9 +111,12 @@ def audio2db2(audio_data: np.ndarray, sample_size: int = 40) -> float:
     sub = max - min
     if sub == 0:
         return 0.0
-
     mean = spectrogram_db.mean()
     y = (mean - min) / sub
+
+    # 一定概率降频,可以使音频块之间的分贝浮动增大
+    if random.random() < frequency_reduction_probability:
+        return y / 2
     # print(y)
     return y
 
