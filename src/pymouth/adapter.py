@@ -2,14 +2,17 @@ import numpy as np
 import soundfile as sf
 import pyvts
 import asyncio
-from .analyser import AudioAnalyser
+from typing import Type
+from .analyser import Analyser, DBAnalyser
 
 
 class VTSAdapter:
     def __init__(self,
+                 analyser: Type[Analyser],
+                 db_mouth_bind_param: str = 'MouthOpen',
                  plugin_info: dict = None,
-                 vts_api: dict = None,
-                 mouth_bind_param: str = 'MouthOpen'):
+                 vts_api: dict = None
+                 ):
 
         if plugin_info is None:
             plugin_info = {"plugin_name": "pymouth",
@@ -24,10 +27,12 @@ class VTSAdapter:
                 "port": 8001
             }
 
+        self.analyser = analyser
+        self.db_mouth_bind_param = db_mouth_bind_param
         self.plugin_info = plugin_info
         self.vts_api = vts_api
+
         self.vts = pyvts.vts(plugin_info=self.plugin_info, vts_api_info=self.vts_api)
-        self.mouth_bind_param = mouth_bind_param
         self.event_loop = asyncio.get_event_loop()
 
     async def __aenter__(self):
@@ -51,13 +56,12 @@ class VTSAdapter:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.vts.close()
 
-    def __callback(self, y, data):
+    def __db_callback(self, y, data):
 
         async def dd():
-            print(y)
             await self.vts.request(
                 self.vts.vts_request.requestSetParameterValue(
-                    parameter=self.mouth_bind_param,
+                    parameter=self.db_mouth_bind_param,
                     value=y,
                 )
             )
@@ -67,13 +71,13 @@ class VTSAdapter:
     async def action(self,
                      audio: np.ndarray | str | sf.SoundFile,
                      samplerate: int | float,
-                     channels: int,
+                     output_channels: int,
                      auto_play: bool = True):
 
-        with AudioAnalyser(audio=audio,
-                           samplerate=samplerate,
-                           channels=channels,
-                           callback=self.__callback,
-                           auto_play=auto_play) as a:
-            a.async_action()
-            print("end")
+        if self.analyser == DBAnalyser:
+            with DBAnalyser(audio=audio,
+                            samplerate=samplerate,
+                            output_channels=output_channels,
+                            callback=self.__db_callback,
+                            auto_play=auto_play) as a:
+                a.async_action()

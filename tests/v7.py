@@ -1,7 +1,7 @@
 import soundfile as sf
 import numpy as np
 import time
-from src.pymouth import AudioAnalyser
+from src.pymouth import DBAnalyser
 
 
 def callback(y, data):
@@ -24,14 +24,14 @@ def test1():
         print(fs.dtype)
         print(fs.shape)
 
-        with AudioAnalyser(fs, f.samplerate, channels=1, callback=callback) as a:
+        with DBAnalyser(fs, f.samplerate, output_channels=1, callback=callback) as a:
             a.sync_action()
             print("end")
             time.sleep(1000000)
 
 
 def test2():
-    with AudioAnalyser('zh.wav', 44100, channels=1, callback=callback) as a:
+    with DBAnalyser('zh.wav', 44100, output_channels=1, callback=callback) as a:
         a.async_action()
         print("end")
         time.sleep(1000000)

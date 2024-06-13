@@ -13,10 +13,11 @@ readme = "README.md"
 license-files = { paths = ["LICENSE"] }
 requires-python = ">=3.10"
 dependencies = [
-    "librosa>=0.10.2.post1",
-    "sounddevice>=0.4.7",
-    "soundfile>=0.12.1",
-    "numpy>=1.26.4"
+    "librosa~=0.10.2.post1",
+    "sounddevice~=0.4.7",
+    "soundfile~=0.12.1",
+    "numpy~=1.26.4",
+    "pyvts~=0.3.2"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

@@ -1,2 +1,2 @@
-from .analyser import AudioAnalyser
+from .analyser import Analyser, DBAnalyser
 from .adapter import VTSAdapter
