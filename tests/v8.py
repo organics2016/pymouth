@@ -13,11 +13,11 @@ async def main():
         await a.action(audio='zh.wav', samplerate=44100, output_channels=1)
         await asyncio.sleep(100000)
 
-    async with VTSAdapter(DBAnalyser) as a:
-        await a.action('zh.wav', 44100, output_channels=1, finished_callback=finished_callback)
-        await asyncio.sleep(40)
-        await a.action('zh.wav', 44100, output_channels=1, finished_callback=finished_callback)
-        await asyncio.sleep(100000)
+    # async with VTSAdapter(DBAnalyser) as a:
+    #     await a.action('zh.wav', 44100, output_channels=1, finished_callback=finished_callback)
+    #     await asyncio.sleep(40)
+    #     await a.action('zh.wav', 44100, output_channels=1, finished_callback=finished_callback)
+    #     await asyncio.sleep(100000)
 
 
 if __name__ == "__main__":

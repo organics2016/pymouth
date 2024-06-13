@@ -41,6 +41,7 @@ if __name__ == "__main__":
 - 文档补全
 - CI
 - 基于元音的口型同步API
+- Test case
 
 ### Special Thanks
 
