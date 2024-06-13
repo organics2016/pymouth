@@ -1,9 +1,4 @@
-import audio2numpy
-from audio2numpy import open_audio
-from IPython.display import Audio
 import pyaudio
-import librosa
-import audioread
 
 
 def get_audio_devices():
@@ -29,6 +24,7 @@ def get_audio_output_devices():
         if item.get('maxOutputChannels') > 0:
             devices.append(item)
     return devices
+
 
 if __name__ == '__main__':
     # get_audio_devices()

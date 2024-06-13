@@ -1,18 +1,27 @@
-import numpy as np
-import soundfile as sf
-import pyvts
 import asyncio
 from typing import Type
+
+import numpy as np
+import pyvts
+import soundfile as sf
+
 from .analyser import Analyser, DBAnalyser
 
 
 class VTSAdapter:
     def __init__(self,
                  analyser: Type[Analyser],
-                 db_mouth_bind_param: str = 'MouthOpen',
+                 db_vts_mouth_param: str = 'MouthOpen',
                  plugin_info: dict = None,
                  vts_api: dict = None
                  ):
+        """
+        VTubeStudio Adapter.
+        :param analyser: 分析仪,必须是 Analyser 的子类
+        :param db_vts_mouth_param: 针对于DBAnalyser, VTS中控制mouth的参数,这个参数一般是 'MouthOpen'
+        :param plugin_info: 插件信息,可以自定义
+        :param vts_api: VTS API的一些配置, 可以自定义 VTS server port
+        """
 
         if plugin_info is None:
             plugin_info = {"plugin_name": "pymouth",
@@ -28,7 +37,7 @@ class VTSAdapter:
             }
 
         self.analyser = analyser
-        self.db_mouth_bind_param = db_mouth_bind_param
+        self.db_vts_mouth_param = db_vts_mouth_param
         self.plugin_info = plugin_info
         self.vts_api = vts_api
 
@@ -61,7 +70,7 @@ class VTSAdapter:
         async def dd():
             await self.vts.request(
                 self.vts.vts_request.requestSetParameterValue(
-                    parameter=self.db_mouth_bind_param,
+                    parameter=self.db_vts_mouth_param,
                     value=y,
                 )
             )
@@ -73,6 +82,14 @@ class VTSAdapter:
                      samplerate: int | float,
                      output_channels: int,
                      auto_play: bool = True):
+
+        """
+        将集合均分，每份n个元素
+        :param audio: 音频数据, 它可以是文件,也可以是ndarray
+        :param samplerate: 采样率, 这取决与音频数据的采样率, 如果你无法获取到音频数据的采样率, 可以尝试输出设备的采样率.
+        :param output_channels: 输出设备通道, 这取决与你的硬件, 你也可以使用虚拟设备.
+        :param auto_play: 是否自动播放音频, 默认为True, 如果为True,会播放音频(自动将audio写入指定output_channels)
+        """
 
         if self.analyser == DBAnalyser:
             with DBAnalyser(audio=audio,
