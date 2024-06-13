@@ -75,12 +75,14 @@ class VTSAdapter:
                 )
             )
 
+        # asyncio.ensure_future(dd())
         asyncio.run_coroutine_threadsafe(dd(), self.event_loop)
 
     async def action(self,
                      audio: np.ndarray | str | sf.SoundFile,
                      samplerate: int | float,
                      output_channels: int,
+                     finished_callback=None,
                      auto_play: bool = True):
 
         """
@@ -88,6 +90,7 @@ class VTSAdapter:
         :param audio: 音频数据, 它可以是文件,也可以是ndarray
         :param samplerate: 采样率, 这取决与音频数据的采样率, 如果你无法获取到音频数据的采样率, 可以尝试输出设备的采样率.
         :param output_channels: 输出设备通道, 这取决与你的硬件, 你也可以使用虚拟设备.
+        :param finished_callback:
         :param auto_play: 是否自动播放音频, 默认为True, 如果为True,会播放音频(自动将audio写入指定output_channels)
         """
 
@@ -96,5 +99,6 @@ class VTSAdapter:
                             samplerate=samplerate,
                             output_channels=output_channels,
                             callback=self.__db_callback,
+                            finished_callback=finished_callback,
                             auto_play=auto_play) as a:
                 a.async_action()

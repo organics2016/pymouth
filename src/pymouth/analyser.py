@@ -17,21 +17,21 @@ class DBAnalyser(Analyser):
                  samplerate: int | float,
                  output_channels: int,
                  callback,
+                 finished_callback=None,
                  auto_play: bool = True,
                  dtype: np.dtype = np.float32,
                  block_size: int = 2048,
-                 buffer_size: int = 20,
-                 frequency_reduction_probability: float = 0.25):
+                 buffer_size: int = 20):
 
         self.audio = audio
         self.samplerate = samplerate
         self.output_channels = output_channels
         self.callback = callback
+        self.finished_callback = finished_callback
         self.auto_play = auto_play
         self.dtype = dtype
         self.block_size = block_size
         self.buffer_size = buffer_size
-        self.frequency_reduction_probability = frequency_reduction_probability
         self.thread = None
 
     def __enter__(self):
@@ -56,6 +56,7 @@ class DBAnalyser(Analyser):
                     datas = split_list_by_n(self.audio, self.block_size)
                     for data in datas:
                         self.__call(data, stream)
+
                 elif isinstance(self.audio, str):
                     with sf.SoundFile(self.audio) as f:
                         while True:
@@ -63,6 +64,7 @@ class DBAnalyser(Analyser):
                             if not len(data):
                                 break
                             self.__call(data, stream)
+
                 elif isinstance(self.audio, sf.SoundFile):
                     while True:
                         data = self.audio.read(self.block_size, dtype=self.dtype)
@@ -91,13 +93,16 @@ class DBAnalyser(Analyser):
                         break
                     self.__call(data)
 
+        if self.finished_callback is not None:
+            self.finished_callback()
+
     def __call(self, data: np.ndarray, stream: sd.OutputStream = None):
         if stream is not None:
             stream.write(data)
-        self.callback(audio2db(data, self.frequency_reduction_probability), data)
+        self.callback(audio2db(data), data)
 
 
-def audio2db(audio_data: np.ndarray, frequency_reduction_probability) -> float:
+def audio2db(audio_data: np.ndarray) -> float:
     audio_data = channel_conversion(audio_data)
     # 计算频谱图
     spectrogram = librosa.stft(audio_data)
@@ -117,7 +122,7 @@ def audio2db(audio_data: np.ndarray, frequency_reduction_probability) -> float:
 
     # y = (std-min)/(max-min) 这里假设: 最小标准差为0,最大标准差是分贝平均值的绝对值, 然后对标准差y进行min-max标准化
     y = float(std / np.abs(mean))
-    print(y)
+    # print(y)
     return y
 
 

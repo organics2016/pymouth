@@ -4,15 +4,20 @@ from src.pymouth.adapter import VTSAdapter
 from src.pymouth.analyser import DBAnalyser
 
 
-async def main():
-    async with VTSAdapter(DBAnalyser) as a:
-        await a.action('zh.wav', 44100, output_channels=1)
-        await asyncio.sleep(100000)
+def finished_callback():
+    print("finished_callback")
 
+
+async def main():
     # async with VTSAdapter(DBAnalyser) as a:
-    #     for i in range(2):
-    #         await a.action('zh.wav', 44100, output_channels=1)
-    #     await asyncio.sleep(100000)
+    # await a.action('zh.wav', 44100, output_channels=1)
+    # await asyncio.sleep(100000)
+
+    async with VTSAdapter(DBAnalyser) as a:
+        await a.action('zh.wav', 44100, output_channels=1, finished_callback=finished_callback)
+        await asyncio.sleep(40)
+        await a.action('zh.wav', 44100, output_channels=1, finished_callback=finished_callback)
+        await asyncio.sleep(100000)
 
 
 if __name__ == "__main__":
