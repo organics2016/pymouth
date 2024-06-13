@@ -1,10 +1,10 @@
+from abc import ABCMeta
+from threading import Thread
+
 import librosa
-import soundfile as sf
 import numpy as np
 import sounddevice as sd
-import random
-from threading import Thread
-from abc import ABCMeta, abstractmethod
+import soundfile as sf
 
 
 class Analyser(metaclass=ABCMeta):
@@ -104,22 +104,20 @@ def audio2db(audio_data: np.ndarray, frequency_reduction_probability) -> float:
     # 将幅度转换为分贝
     spectrogram_db = librosa.amplitude_to_db((np.abs(spectrogram)))
     # 采样
-    # spectrogram_db = spectrogram_db[0:len(audio_data):sample_size]
+    # spectrogram_db = spectrogram_db[0:len(audio_data):100]
+
     # 采样出nan值统一为 最小分贝
     spectrogram_db = np.nan_to_num(spectrogram_db, nan=-100.0)
-    # 标准化
-    min = -100
-    max = np.max(spectrogram_db)
-    sub = max - min
-    if sub == 0:
-        return 0.0
-    mean = spectrogram_db.mean()
-    y = (mean - min) / sub
 
-    # 一定概率降频,可以使音频块之间的分贝浮动增大
-    if random.random() < frequency_reduction_probability:
-        return y / 2
-    # print(y)
+    # 标准化
+    mean = spectrogram_db.mean()
+    std = spectrogram_db.std()
+    if mean == 0:
+        return 0
+
+    # y = (std-min)/(max-min) 这里假设: 最小标准差为0,最大标准差是分贝平均值的绝对值, 然后对标准差y进行min-max标准化
+    y = float(std / np.abs(mean))
+    print(y)
     return y
 
 

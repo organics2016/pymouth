@@ -5,11 +5,14 @@ from src.pymouth.analyser import DBAnalyser
 
 
 async def main():
-
-
     async with VTSAdapter(DBAnalyser) as a:
         await a.action('zh.wav', 44100, output_channels=1)
         await asyncio.sleep(100000)
+
+    # async with VTSAdapter(DBAnalyser) as a:
+    #     for i in range(2):
+    #         await a.action('zh.wav', 44100, output_channels=1)
+    #     await asyncio.sleep(100000)
 
 
 if __name__ == "__main__":
