@@ -12,6 +12,11 @@
 
 ## Quick Start
 
+### Environment
+
+- Python>=3.10
+- VTubeStudio>=1.28.0 (可选)
+
 ### Installation
 
 ```shell
@@ -42,6 +47,28 @@ if __name__ == "__main__":
 之后运行不会重复授权, 除非token文件丢失或在`VTubeStudio`移除授权.
 
 ### More Details
+
+Get Started 演示了一种High Level API 如果你不使用 `VTubeStudio` 或者想更加灵活的使用, 可以尝试Low Level API. 下面是一个Demo.
+
+```python
+import time
+from pymouth import DBAnalyser
+
+
+def callback(y, data):
+    print(y)  # do something
+
+
+def finished_callback():
+    print("finished_callback")
+
+
+with DBAnalyser('zh.wav', 44100, output_channels=1, callback=callback) as a:
+    a.async_action()  # no block
+    # a.sync_action() # block
+    print("end")
+    time.sleep(1000000)
+```
 
 ### TODO
 
