@@ -1,6 +1,6 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pymouth)]()
 [![PyPI - License](https://img.shields.io/pypi/l/pymouth)](https://github.com/organics2016/pymouth/blob/master/LICENSE)
-[![PyPI - Version](https://img.shields.io/pypi/v/pymouth)](https://pypi.org/project/pymouth/)
+[![PyPI - Version](https://img.shields.io/pypi/v/pymouth?color=green)](https://pypi.org/project/pymouth/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/pymouth)](https://pypi.org/project/pymouth/)
 
 # pymouth
