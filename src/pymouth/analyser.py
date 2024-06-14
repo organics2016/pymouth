@@ -123,6 +123,9 @@ def audio2db(audio_data: np.ndarray) -> float:
     # y = (std-min)/(max-min) 这里假设: 最小标准差为0,最大标准差是分贝平均值的绝对值, 然后对标准差y进行min-max标准化
     y = float(std / np.abs(mean))
     # print(y)
+    # 有标准差大于平均值的情况,
+    if y > 1:
+        return 1.0
     return y
 
 
