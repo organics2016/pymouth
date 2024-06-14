@@ -1,7 +1,7 @@
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pymouth)
-![PyPI - License](https://img.shields.io/pypi/l/pymouth?link=https%3A%2F%2Fgithub.com%2Forganics2016%2Fpymouth%2Fblob%2Fmaster%2FLICENSE)
-![PyPI - Version](https://img.shields.io/pypi/v/pymouth?link=https%3A%2F%2Fpypi.org%2Fproject%2Fpymouth%2F)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/pymouth?link=https%3A%2F%2Fpypi.org%2Fproject%2Fpymouth%2F)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pymouth)]()
+[![PyPI - License](https://img.shields.io/pypi/l/pymouth)](https://github.com/organics2016/pymouth/blob/master/LICENSE)
+[![PyPI - Version](https://img.shields.io/pypi/v/pymouth)](https://pypi.org/project/pymouth/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/pymouth)](https://pypi.org/project/pymouth/)
 
 # pymouth
 
