@@ -25,7 +25,7 @@ pip install pymouth
 
 ### Get Started
 
-注意: 在开始前你需要打开 `VTubeStudio` 的 Server API. 端口一般默认是8001.<br>
+注意: 在开始前你需要打开 `VTubeStudio` 的 Server 开关. 端口一般默认是8001.<br>
 下面是一个完整的Demo,你可以找一个音频文件替换`some.wav`.<br>
 
 ```python
