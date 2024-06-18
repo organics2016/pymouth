@@ -46,9 +46,9 @@ if __name__ == "__main__":
 第一次运行程序时, `VTubeStudio`会弹出插件授权界面, 通过授权后, 插件会在runtime路径下生成`pymouth_vts_token.txt`文件,
 之后运行不会重复授权, 除非token文件丢失或在`VTubeStudio`移除授权.<br>
 
-### More Details
+## More Details
 
-#### High Level
+### High Level
 
 关键的代码只有两行,且都是异步的:
 
@@ -78,7 +78,7 @@ async with VTSAdapter(DBAnalyser) as a:
 | `finished_callback` |          | `None`  | 音频处理完成会回调这个方法                                                 |
 | `auto_play`         |          | `True`  | 是否自动播放音频, 默认为True, 如果为True,会播放音频(自动将audio写入指定output_channels) |
 
-#### Low Level
+### Low Level
 
 Get Started 演示了一种High Level API 如果你不使用 `VTubeStudio` 或者想更加灵活的使用, 可以尝试Low Level API. 下面是一个Demo.
 
@@ -98,14 +98,14 @@ with DBAnalyser('zh.wav', 44100, output_channels=1, callback=callback) as a:
     time.sleep(1000000)
 ```
 
-### TODO
+## TODO
 
 - 文档补全
 - CI
 - 基于元音的口型同步API
 - Test case
 
-### Special Thanks
+## Special Thanks
 
 Idea源:
 [![](https://avatars.githubusercontent.com/u/1933673?s=40)卜卜口](https://github.com/itorr)
