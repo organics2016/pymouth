@@ -6,11 +6,6 @@ from src.pymouth import DBAnalyser
 def callback(y, data):
     print(y)
 
-
-def finished_callback():
-    print("finished_callback")
-
-
 with DBAnalyser('zh.wav', 44100, output_channels=1, callback=callback) as a:
     a.async_action()
     # a.sync_action()
