@@ -104,20 +104,21 @@ class DBAnalyser(Analyser):
 
 def audio2db(audio_data: np.ndarray) -> float:
     audio_data = channel_conversion(audio_data)
-    # 计算频谱图
-    spectrogram = librosa.stft(audio_data)
-    # 将幅度转换为分贝
-    spectrogram_db = librosa.amplitude_to_db((np.abs(spectrogram)))
+    # 计算频谱
+    spectrum = librosa.stft(audio_data, n_fft=audio_data.size)
+    # 将频谱转换为分贝
+    spectrum_db = librosa.amplitude_to_db((np.abs(spectrum)))
     # 采样
-    # spectrogram_db = spectrogram_db[0:len(audio_data):100]
+    # spectrum_db = spectrum_db[0:len(audio_data):100]
 
     # 采样出nan值统一为 最小分贝
-    spectrogram_db = np.nan_to_num(spectrogram_db, nan=-100.0)
+    spectrum_db = np.nan_to_num(spectrum_db, nan=-100.0)
 
     # 标准化
-    mean = spectrogram_db.mean()
-    std = spectrogram_db.std()
-    if mean == 0:
+    mean = spectrum_db.mean()
+    std = spectrum_db.std()
+    # print(f"mean: {mean}, std: {std}")
+    if mean == 0 or std == 0:
         return 0
 
     # y = (std-min)/(max-min) 这里假设: 最小标准差为0,最大标准差是分贝平均值的绝对值, 然后对标准差y进行min-max标准化
