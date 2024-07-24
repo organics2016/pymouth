@@ -1,30 +1,24 @@
-import audioread
-import pyaudio
-import librosa
+import librosa.feature
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy import ndarray
-import os
-import math
 import soundfile as sf
-from audioread import AudioFile
-
-from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union, List
+from numpy import ndarray
 
 plt.ion()
 
-fig = plt.figure()  # 创建图
+fig, ax = plt.subplots(nrows=3, sharex=True)  # 创建图
+
+
 # plt.ylim(-100, 100)  # Y轴取值范围
 # plt.yticks([-12 + 2 * i for i in range(13)], [-12 + 2 * i for i in range(13)])  # Y轴刻度
 # plt.xlim(0, 100)  # X轴取值范围
 # plt.xticks([0.5 * i for i in range(14)], [0.5 * i for i in range(14)])  # X轴刻度
-plt.title("t")  # 标题
-plt.xlabel("X")  # X轴标签
-plt.ylabel("Y")  # Y轴标签
-x, y = [], []  # 用于保存绘图数据，最开始时什么都没有，默认为空
+# plt.title("t")  # 标题
+# plt.xlabel("X")  # X轴标签
+# plt.ylabel("Y")  # Y轴标签
+# x, y = [], []  # 用于保存绘图数据，最开始时什么都没有，默认为空
+# ax[0].set(title='MFCC')
 
-
-# 播放器 播放的过程中将音频数据发送到分析池 分析池被另一个线程调用并分析数据
 
 def audio2db2(audio_data: ndarray) -> float:
     # print(audio_data.ndim)
@@ -85,6 +79,50 @@ def audio2db(audio_data: bytes) -> float:
     return spectrogram_db.std()
 
 
+def audio_test(audio_data: ndarray, axi: int) -> np.array:
+    # 如果音频数据为立体声，则将其转换为单声道
+    if audio_data.ndim == 2 and audio_data.shape[1] == 2:
+        audio_data = audio_data[:, 0]
+
+    # spectrogram = librosa.stft(audio_data, n_fft=audio_data.size)
+    # spectrogram_abs = np.abs(spectrogram)
+    mfccs = librosa.feature.mfcc(y=audio_data, dct_type=1, n_mfcc=13, n_fft=1024, hop_length=64)
+    print(mfccs.ndim)
+    print(mfccs.shape)
+    print(mfccs)
+    img = librosa.display.specshow(data=mfccs, ax=ax[axi])
+    # fig.colorbar(img, ax=[ax[axi]])
+    return mfccs
+
+
+with sf.SoundFile('aiueo.mp3') as f:
+    fs = np.empty(0, dtype=np.float32)
+    fs1 = np.empty(0, dtype=np.float32)
+    fs2 = np.empty(0, dtype=np.float32)
+
+    for i in range(1000000):
+        data = f.read(1024, dtype=np.float32)
+        if not len(data):
+            print(i)
+            break
+
+        fs = np.append(fs, data)
+        if i == 190:
+            fs1 = data
+        elif i == 480:
+            fs2 = data
+
+    mfcc1 = audio_test(fs1, 1)
+    mfcc2 = audio_test(fs2, 2)
+    # audio_test(fs, 0)
+
+    mfcc1 = mfcc1[1:].flatten()
+    mfcc2 = mfcc2[1:].flatten()
+
+    cosine_similarity = np.dot(mfcc1, mfcc2) / (np.linalg.norm(mfcc1) * np.linalg.norm(mfcc2))
+    print(cosine_similarity)
+    plt.pause(100000000000)
+
 # with sf.SoundFile('zh.wav') as f:
 #     print(f.channels, f.samplerate, f.frames)
 #     for i in range(1000000):
@@ -97,21 +135,22 @@ def audio2db(audio_data: bytes) -> float:
 #         plt.plot(x, y)
 #         plt.pause(1)
 
-p = pyaudio.PyAudio()
-
-stream = p.open(format=pyaudio.paFloat32,
-                channels=1,
-                rate=44100,
-                input=True,
-                frames_per_buffer=2048)
-
-for i in range(10000):
-    # while True:
-    data = stream.read(2048)
-    audio_data = np.frombuffer(data, dtype=np.float32)
-    spectrogram_db = audio2db2(audio_data)
-
-    x.append(i)
-    y.append(spectrogram_db)
-    plt.plot(x, y)
-    plt.pause(1)
+# p = pyaudio.PyAudio()
+#
+# stream = p.open(format=pyaudio.paFloat32,
+#                 channels=1,
+#                 rate=44100,
+#                 input=True,
+#                 frames_per_buffer=4096)
+#
+# for i in range(10000):
+#     # while True:
+#     data = stream.read(4096)
+#     audio_data = np.frombuffer(data, dtype=np.float32)
+#     audio_test(audio_data)
+#     # spectrogram_db = audio_test(audio_data)
+#
+#     # x.append(i)
+#     # y.append(spectrogram_db)
+#     # plt.plot(x, y)
+#     plt.pause(1)
