@@ -20,8 +20,7 @@ class DBAnalyser(Analyser):
                  finished_callback=None,
                  auto_play: bool = True,
                  dtype: np.dtype = np.float32,
-                 block_size: int = 2048,
-                 buffer_size: int = 20):
+                 block_size: int = 1024):
 
         self.audio = audio
         self.samplerate = samplerate
@@ -31,7 +30,6 @@ class DBAnalyser(Analyser):
         self.auto_play = auto_play
         self.dtype = dtype
         self.block_size = block_size
-        self.buffer_size = buffer_size
         self.thread = None
 
     def __enter__(self):
@@ -123,7 +121,7 @@ def audio2db(audio_data: np.ndarray) -> float:
 
     # y = (std-min)/(max-min) 这里假设: 最小标准差为0,最大标准差是分贝平均值的绝对值, 然后对标准差y进行min-max标准化
     y = float(std / np.abs(mean))
-    # print(y)
+    print(y)
     # 有标准差大于平均值的情况,
     if y > 1:
         return 1.0
