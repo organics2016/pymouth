@@ -2,6 +2,7 @@ import librosa.feature
 import matplotlib.pyplot as plt
 import numpy as np
 import soundfile as sf
+from dtw import dtw
 from numpy import ndarray
 
 plt.ion()
@@ -86,16 +87,17 @@ def audio_test(audio_data: ndarray, axi: int) -> np.array:
 
     # spectrogram = librosa.stft(audio_data, n_fft=audio_data.size)
     # spectrogram_abs = np.abs(spectrogram)
-    mfccs = librosa.feature.mfcc(y=audio_data, dct_type=1, n_mfcc=13, n_fft=1024, hop_length=64)
+    mfccs = librosa.feature.mfcc(y=audio_data, dct_type=1, n_mfcc=13, n_fft=1024)
     print(mfccs.ndim)
     print(mfccs.shape)
     print(mfccs)
+    print(mfccs.T)
     img = librosa.display.specshow(data=mfccs, ax=ax[axi])
     # fig.colorbar(img, ax=[ax[axi]])
-    return mfccs
+    return mfccs.T
 
 
-with sf.SoundFile('aiueo.mp3') as f:
+with sf.SoundFile('a.mp3') as f:
     fs = np.empty(0, dtype=np.float32)
     fs1 = np.empty(0, dtype=np.float32)
     fs2 = np.empty(0, dtype=np.float32)
@@ -107,20 +109,23 @@ with sf.SoundFile('aiueo.mp3') as f:
             break
 
         fs = np.append(fs, data)
-        if i == 190:
+        if i == 1:
             fs1 = data
-        elif i == 480:
+        elif i == 2:
             fs2 = data
 
     mfcc1 = audio_test(fs1, 1)
     mfcc2 = audio_test(fs2, 2)
     # audio_test(fs, 0)
 
-    mfcc1 = mfcc1[1:].flatten()
-    mfcc2 = mfcc2[1:].flatten()
+    # mfcc1 = mfcc1[1:].flatten()
+    # mfcc2 = mfcc2[1:].flatten()
 
-    cosine_similarity = np.dot(mfcc1, mfcc2) / (np.linalg.norm(mfcc1) * np.linalg.norm(mfcc2))
-    print(cosine_similarity)
+    dtw = dtw(mfcc1, mfcc2, distance_only=True)
+    print(dtw.normalizedDistance)
+    # dtw.plot()
+    # cosine_similarity = np.dot(mfcc1, mfcc2) / (np.linalg.norm(mfcc1) * np.linalg.norm(mfcc2))
+    # print(cosine_similarity)
     plt.pause(100000000000)
 
 # with sf.SoundFile('zh.wav') as f:
