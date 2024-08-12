@@ -1,8 +1,8 @@
 import librosa.feature
 import matplotlib.pyplot as plt
 import numpy as np
+import sounddevice as sd
 import soundfile as sf
-from dtw import dtw
 from numpy import ndarray
 
 plt.ion()
@@ -87,7 +87,7 @@ def audio_test(audio_data: ndarray, axi: int) -> np.array:
 
     # spectrogram = librosa.stft(audio_data, n_fft=audio_data.size)
     # spectrogram_abs = np.abs(spectrogram)
-    mfccs = librosa.feature.mfcc(y=audio_data, dct_type=1, n_mfcc=13, n_fft=1024)
+    mfccs = librosa.feature.mfcc(y=audio_data, dct_type=1, n_mfcc=13, n_fft=1024, hop_length=64)
     print(mfccs.ndim)
     print(mfccs.shape)
     print(mfccs)
@@ -103,29 +103,36 @@ with sf.SoundFile('a.mp3') as f:
     fs2 = np.empty(0, dtype=np.float32)
 
     for i in range(1000000):
-        data = f.read(1024, dtype=np.float32)
+        data = f.read(8192, dtype=np.float32)
         if not len(data):
             print(i)
             break
 
         fs = np.append(fs, data)
-        if i == 1:
+        if i == 0:
             fs1 = data
-        elif i == 2:
+        elif i == 27:
             fs2 = data
 
     mfcc1 = audio_test(fs1, 1)
     mfcc2 = audio_test(fs2, 2)
     # audio_test(fs, 0)
 
-    # mfcc1 = mfcc1[1:].flatten()
-    # mfcc2 = mfcc2[1:].flatten()
+    # mfcc1 = [[0, 99, 1], [0, 1, 4], [0, -2, 1]]
+    # mfcc2 = [[0, 1, 1], [0, 1, 1], [0, 1, 1.1]]
 
-    dtw = dtw(mfcc1, mfcc2, distance_only=True)
-    print(dtw.normalizedDistance)
+    # dtw = dtw(mfcc1, mfcc2, distance_only=True)
+    # dtw = dtw(mfcc1, mfcc2)
+    # print(dtw.distance)
+    # print(dtw.normalizedDistance)
     # dtw.plot()
-    # cosine_similarity = np.dot(mfcc1, mfcc2) / (np.linalg.norm(mfcc1) * np.linalg.norm(mfcc2))
-    # print(cosine_similarity)
+
+    with sd.OutputStream(samplerate=f.samplerate,
+                         blocksize=1024,
+                         channels=1,
+                         dtype=np.float32) as stream:
+        stream.write(fs2)
+
     plt.pause(100000000000)
 
 # with sf.SoundFile('zh.wav') as f:
