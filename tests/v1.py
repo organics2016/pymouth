@@ -104,10 +104,24 @@ def audio_test(audio_data: ndarray, axi: int) -> np.array:
     return mfccs.T
 
 
+fs1 = np.empty(0, dtype=np.float32)
+fs2 = np.empty(0, dtype=np.float32)
+
 with sf.SoundFile('a.mp3') as f:
     fs = np.empty(0, dtype=np.float32)
-    fs1 = np.empty(0, dtype=np.float32)
-    fs2 = np.empty(0, dtype=np.float32)
+
+    for i in range(1000000):
+        # 8192bits 为一个元音的大致长度 这个长度与采样率有关
+        data = f.read(8192, dtype=np.float32)
+        if not len(data):
+            print(i)
+            break
+        fs = np.append(fs, data)
+        if i == 27:
+            fs1 = data
+
+with sf.SoundFile('aiueo.mp3') as f:
+    fs = np.empty(0, dtype=np.float32)
 
     for i in range(1000000):
         # 8192bits 为一个元音的大致长度 这个长度与采样率有关
@@ -117,33 +131,28 @@ with sf.SoundFile('a.mp3') as f:
             break
 
         fs = np.append(fs, data)
-        if i == 27:
-            fs1 = data
-        elif i == 37:
+        if i == 38:
             fs2 = data
 
-    mfcc1 = audio_test(fs1, 1)
-    mfcc2 = audio_test(fs2, 2)
-    # audio_test(fs, 0)
+mfcc1 = audio_test(fs1, 1)
+mfcc2 = audio_test(fs2, 2)
+# audio_test(fs, 0)
 
-    # mfcc1 = [[0, 99, 1], [0, 1, 4], [0, -2, 1]]
-    # mfcc2 = [[0, 1, 1], [0, 1, 1], [0, 1, 1.1]]
+# dtw = dtw(mfcc1, mfcc2, distance_only=True)
+dtw = dtw(mfcc1, mfcc2)
+print(dtw.distance)
+print(dtw.normalizedDistance)
+# dtw.plot()
 
-    # dtw = dtw(mfcc1, mfcc2, distance_only=True)
-    dtw = dtw(mfcc1, mfcc2)
-    print(dtw.distance)
-    print(dtw.normalizedDistance)
-    # dtw.plot()
+with sd.OutputStream(samplerate=f.samplerate,
+                     blocksize=1024,
+                     channels=1,
+                     dtype=np.float32) as stream:
+    stream.write(fs1)
+    time.sleep(2)
+    stream.write(fs2)
 
-    with sd.OutputStream(samplerate=f.samplerate,
-                         blocksize=1024,
-                         channels=1,
-                         dtype=np.float32) as stream:
-        stream.write(fs1)
-        time.sleep(2)
-        stream.write(fs2)
-
-    plt.pause(100000000000)
+plt.pause(100000000000)
 
 # with sf.SoundFile('zh.wav') as f:
 #     print(f.channels, f.samplerate, f.frames)
