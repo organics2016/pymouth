@@ -1,8 +1,11 @@
+import time
+
 import librosa.feature
 import matplotlib.pyplot as plt
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
+from dtw import dtw
 from numpy import ndarray
 
 plt.ion()
@@ -87,10 +90,14 @@ def audio_test(audio_data: ndarray, axi: int) -> np.array:
 
     # spectrogram = librosa.stft(audio_data, n_fft=audio_data.size)
     # spectrogram_abs = np.abs(spectrogram)
-    mfccs = librosa.feature.mfcc(y=audio_data, dct_type=1, n_mfcc=13, n_fft=1024, hop_length=64)
+
+    # 对线性声谱图应用mel滤波器后，取log，得到log梅尔声谱图，然后对log滤波能量（log梅尔声谱）做DCT离散余弦变换（傅里叶变换的一种），然后保留第2到第13个系数，得到的这12个系数就是MFCC
+    mfccs = librosa.feature.mfcc(y=audio_data, dct_type=1, n_mfcc=13, n_fft=8192)
+    # 13个系数 从0开始 取1到13个共12个
+    mfccs = mfccs[1:]
     print(mfccs.ndim)
     print(mfccs.shape)
-    print(mfccs)
+    # print(mfccs)
     print(mfccs.T)
     img = librosa.display.specshow(data=mfccs, ax=ax[axi])
     # fig.colorbar(img, ax=[ax[axi]])
@@ -103,15 +110,16 @@ with sf.SoundFile('a.mp3') as f:
     fs2 = np.empty(0, dtype=np.float32)
 
     for i in range(1000000):
+        # 8192bits 为一个元音的大致长度 这个长度与采样率有关
         data = f.read(8192, dtype=np.float32)
         if not len(data):
             print(i)
             break
 
         fs = np.append(fs, data)
-        if i == 0:
+        if i == 27:
             fs1 = data
-        elif i == 27:
+        elif i == 37:
             fs2 = data
 
     mfcc1 = audio_test(fs1, 1)
@@ -122,15 +130,17 @@ with sf.SoundFile('a.mp3') as f:
     # mfcc2 = [[0, 1, 1], [0, 1, 1], [0, 1, 1.1]]
 
     # dtw = dtw(mfcc1, mfcc2, distance_only=True)
-    # dtw = dtw(mfcc1, mfcc2)
-    # print(dtw.distance)
-    # print(dtw.normalizedDistance)
+    dtw = dtw(mfcc1, mfcc2)
+    print(dtw.distance)
+    print(dtw.normalizedDistance)
     # dtw.plot()
 
     with sd.OutputStream(samplerate=f.samplerate,
                          blocksize=1024,
                          channels=1,
                          dtype=np.float32) as stream:
+        stream.write(fs1)
+        time.sleep(2)
         stream.write(fs2)
 
     plt.pause(100000000000)
