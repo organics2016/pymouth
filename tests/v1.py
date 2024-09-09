@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
-from dtw import dtw
 from numpy import ndarray
+
+import src.pymouth.analyser as analyser
 
 plt.ion()
 
@@ -90,24 +91,25 @@ def audio_test(audio_data: ndarray, axi: int) -> np.array:
 
     # spectrogram = librosa.stft(audio_data, n_fft=audio_data.size)
     # spectrogram_abs = np.abs(spectrogram)
-
+    # https://www.zdaiot.com/DeepLearningApplications/%E8%AF%AD%E9%9F%B3%E5%90%88%E6%88%90/%E8%AF%AD%E9%9F%B3%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/
     # 对线性声谱图应用mel滤波器后，取log，得到log梅尔声谱图，然后对log滤波能量（log梅尔声谱）做DCT离散余弦变换（傅里叶变换的一种），然后保留第2到第13个系数，得到的这12个系数就是MFCC
-    mfccs = librosa.feature.mfcc(y=audio_data, dct_type=1, n_mfcc=13, n_fft=8192)
+    mfccs = librosa.feature.mfcc(y=audio_data, sr=22050, dct_type=1, n_mfcc=13)
     # 13个系数 从0开始 取1到13个共12个
     mfccs = mfccs[1:]
     print(mfccs.ndim)
     print(mfccs.shape)
-    # print(mfccs)
+    buf = [[j for j in i] for i in mfccs.T]
+    print(buf)
     print(mfccs.T)
     img = librosa.display.specshow(data=mfccs, ax=ax[axi])
     # fig.colorbar(img, ax=[ax[axi]])
-    return mfccs.T
+    return buf
 
 
 fs1 = np.empty(0, dtype=np.float32)
 fs2 = np.empty(0, dtype=np.float32)
 
-with sf.SoundFile('a.mp3') as f:
+with sf.SoundFile('silence2.mp3') as f:
     fs = np.empty(0, dtype=np.float32)
 
     for i in range(1000000):
@@ -117,7 +119,7 @@ with sf.SoundFile('a.mp3') as f:
             print(i)
             break
         fs = np.append(fs, data)
-        if i == 27:
+        if i == 26:
             fs1 = data
 
 with sf.SoundFile('aiueo.mp3') as f:
@@ -131,7 +133,7 @@ with sf.SoundFile('aiueo.mp3') as f:
             break
 
         fs = np.append(fs, data)
-        if i == 38:
+        if i == 0:
             fs2 = data
 
 mfcc1 = audio_test(fs1, 1)
@@ -139,17 +141,23 @@ mfcc2 = audio_test(fs2, 2)
 # audio_test(fs, 0)
 
 # dtw = dtw(mfcc1, mfcc2, distance_only=True)
-dtw = dtw(mfcc1, mfcc2)
-print(dtw.distance)
-print(dtw.normalizedDistance)
+# dtw = dtw(mfcc1, mfcc2)
+# print(dtw.distance)
+# print(dtw.normalizedDistance)
 # dtw.plot()
+
+vowel1 = analyser.audio2vowel(fs1)
+vowel2 = analyser.audio2vowel(fs2)
+
+print(vowel1)
+print(vowel2)
 
 with sd.OutputStream(samplerate=f.samplerate,
                      blocksize=1024,
                      channels=1,
                      dtype=np.float32) as stream:
     stream.write(fs1)
-    time.sleep(2)
+    time.sleep(4)
     stream.write(fs2)
 
 plt.pause(100000000000)

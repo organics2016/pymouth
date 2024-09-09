@@ -5,7 +5,7 @@ import numpy as np
 import pyvts
 import soundfile as sf
 
-from .analyser import Analyser, DBAnalyser
+from .analyser import Analyser, DBAnalyser, VowelAnalyser
 
 
 class VTSAdapter:
@@ -78,6 +78,20 @@ class VTSAdapter:
         # asyncio.ensure_future(dd())
         asyncio.run_coroutine_threadsafe(dd(), self.event_loop)
 
+    def __vowel_callback(self, vowel_dict, data):
+        async def dd():
+            # TODO 新版本的 pyvts 支持批量属性修改，等作者更新到0.3.2以上
+            for k, v in vowel_dict.items():
+                await self.vts.request(
+                    self.vts.vts_request.requestSetParameterValue(
+                        parameter=k,
+                        value=v,
+                    )
+                )
+
+        # asyncio.ensure_future(dd())
+        asyncio.run_coroutine_threadsafe(dd(), self.event_loop)
+
     async def action(self,
                      audio: np.ndarray | str | sf.SoundFile,
                      samplerate: int | float,
@@ -101,4 +115,12 @@ class VTSAdapter:
                             callback=self.__db_callback,
                             finished_callback=finished_callback,
                             auto_play=auto_play) as a:
+                a.async_action()
+        elif self.analyser == VowelAnalyser:
+            with VowelAnalyser(audio=audio,
+                               samplerate=samplerate,
+                               output_channels=output_channels,
+                               callback=self.__vowel_callback,
+                               finished_callback=finished_callback,
+                               auto_play=auto_play) as a:
                 a.async_action()
