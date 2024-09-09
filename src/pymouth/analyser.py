@@ -139,7 +139,7 @@ class VowelAnalyser(Analyser):
                  finished_callback=None,
                  auto_play: bool = True,
                  dtype: np.dtype = np.float32,
-                 block_size: int = 8192):
+                 block_size: int = 4096):
 
         self.audio = audio
         self.samplerate = samplerate
@@ -432,8 +432,11 @@ def audio2vowel(audio_data: np.ndarray) -> dict[str, float]:
 
     # 对线性声谱图应用mel滤波器后，取log，得到log梅尔声谱图，然后对log滤波能量（log梅尔声谱）做DCT离散余弦变换（傅里叶变换的一种），然后保留第2到第13个系数，得到的这12个系数就是MFCC
     n_fft = 512 if audio_data.size >= 512 else audio_data.size
+    # TODO 这里还有数组对其问题
     mfccs = librosa.feature.mfcc(y=audio_data, sr=22050, n_fft=512, dct_type=1, n_mfcc=13)[
             1:].T  # 13个系数 从0开始 取1到13个共12个
+
+    print(mfccs.shape)
 
     si = 1 / dtw(V_Silence, mfccs, distance_only=True).normalizedDistance
     a = 1 / dtw(V_A, mfccs, distance_only=True).normalizedDistance
