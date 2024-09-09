@@ -103,7 +103,8 @@ class DBAnalyser(Analyser):
 def audio2db(audio_data: np.ndarray) -> float:
     audio_data = channel_conversion(audio_data)
     # 计算频谱
-    spectrum = librosa.stft(audio_data, n_fft=audio_data.size)
+    n_fft = 512 if audio_data.size >= 512 else audio_data.size
+    spectrum = librosa.stft(audio_data, n_fft=n_fft)
     # 将频谱转换为分贝
     spectrum_db = librosa.amplitude_to_db((np.abs(spectrum)))
     # 采样
