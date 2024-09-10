@@ -12,6 +12,7 @@ class VTSAdapter:
     def __init__(self,
                  analyser: Type[Analyser],
                  db_vts_mouth_param: str = 'MouthOpen',
+                 vowel_vts_mouth_param: tuple[str] = ('VoiceSilence', 'VoiceA', 'VoiceI', 'VoiceU', 'VoiceE', 'VoiceO'),
                  plugin_info: dict = None,
                  vts_api: dict = None
                  ):
@@ -19,6 +20,7 @@ class VTSAdapter:
         VTubeStudio Adapter.
         :param analyser: 分析仪,必须是 Analyser 的子类
         :param db_vts_mouth_param: 针对于DBAnalyser, VTS中控制mouth的参数,这个参数一般是 'MouthOpen'
+        :param vowel_vts_mouth_param: 针对于VowelAnalyser, VTS中控制mouth的参数,这个参数一般是 ('VoiceSilence', 'VoiceA', 'VoiceI', 'VoiceU', 'VoiceE', 'VoiceO')
         :param plugin_info: 插件信息,可以自定义
         :param vts_api: VTS API的一些配置, 可以自定义 VTS server port
         """
@@ -38,6 +40,7 @@ class VTSAdapter:
 
         self.analyser = analyser
         self.db_vts_mouth_param = db_vts_mouth_param
+        self.vowel_vts_mouth_param = vowel_vts_mouth_param
         self.plugin_info = plugin_info
         self.vts_api = vts_api
 
