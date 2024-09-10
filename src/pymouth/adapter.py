@@ -75,7 +75,6 @@ class VTSAdapter:
                 )
             )
 
-        # asyncio.ensure_future(dd())
         asyncio.run_coroutine_threadsafe(dd(), self.event_loop)
 
     def __vowel_callback(self, vowel_dict: dict, data):
@@ -87,7 +86,6 @@ class VTSAdapter:
                 )
             )
 
-        # asyncio.ensure_future(dd())
         asyncio.run_coroutine_threadsafe(dd(), self.event_loop)
 
     async def action(self,
