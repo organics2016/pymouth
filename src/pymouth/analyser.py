@@ -9,10 +9,6 @@ from dtw import dtw
 
 
 class Analyser(metaclass=ABCMeta):
-    pass
-
-
-class DBAnalyser(Analyser):
     def __init__(self,
                  audio: np.ndarray | str | sf.SoundFile,
                  samplerate: int | float,
@@ -54,7 +50,7 @@ class DBAnalyser(Analyser):
                 if isinstance(self.audio, np.ndarray):
                     datas = split_list_by_n(self.audio, self.block_size)
                     for data in datas:
-                        self.__call(data, stream)
+                        self.call_adapter(data, stream)
 
                 elif isinstance(self.audio, str):
                     with sf.SoundFile(self.audio) as f:
@@ -62,20 +58,20 @@ class DBAnalyser(Analyser):
                             data = f.read(self.block_size, dtype=self.dtype)
                             if not len(data):
                                 break
-                            self.__call(data, stream)
+                            self.call_adapter(data, stream)
 
                 elif isinstance(self.audio, sf.SoundFile):
                     while True:
                         data = self.audio.read(self.block_size, dtype=self.dtype)
                         if not len(data):
                             break
-                        self.__call(data, stream)
+                        self.call_adapter(data, stream)
 
         else:
             if isinstance(self.audio, np.ndarray):
                 datas = split_list_by_n(self.audio, self.block_size)
                 for data in datas:
-                    self.__call(data)
+                    self.call_adapter(data)
 
             elif isinstance(self.audio, str):
                 with sf.SoundFile(self.audio) as f:
@@ -83,19 +79,34 @@ class DBAnalyser(Analyser):
                         data = f.read(self.block_size, dtype=self.dtype)
                         if not len(data):
                             break
-                        self.__call(data)
+                        self.call_adapter(data)
 
             elif isinstance(self.audio, sf.SoundFile):
                 while True:
                     data = self.audio.read(self.block_size, dtype=self.dtype)
                     if not len(data):
                         break
-                    self.__call(data)
+                    self.call_adapter(data)
 
         if self.finished_callback is not None:
             self.finished_callback()
 
-    def __call(self, data: np.ndarray, stream: sd.OutputStream = None):
+    def call_adapter(self, data: np.ndarray, stream: sd.OutputStream = None):
+        pass
+
+
+class DBAnalyser(Analyser):
+    def __init__(self,
+                 audio: np.ndarray | str | sf.SoundFile,
+                 samplerate: int | float, output_channels: int,
+                 callback,
+                 finished_callback=None,
+                 auto_play: bool = True,
+                 dtype: np.dtype = np.float32,
+                 block_size: int = 1024):
+        super().__init__(audio, samplerate, output_channels, callback, finished_callback, auto_play, dtype, block_size)
+
+    def call_adapter(self, data: np.ndarray, stream: sd.OutputStream = None):
         if stream is not None:
             stream.write(data)
         self.callback(audio2db(data), data)
@@ -140,80 +151,9 @@ class VowelAnalyser(Analyser):
                  auto_play: bool = True,
                  dtype: np.dtype = np.float32,
                  block_size: int = 4096):
+        super().__init__(audio, samplerate, output_channels, callback, finished_callback, auto_play, dtype, block_size)
 
-        self.audio = audio
-        self.samplerate = samplerate
-        self.output_channels = output_channels
-        self.callback = callback
-        self.finished_callback = finished_callback
-        self.auto_play = auto_play
-        self.dtype = dtype
-        self.block_size = block_size
-        self.thread = None
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        pass
-
-    def async_action(self):
-        self.thread = Thread(target=self.sync_action)
-        self.thread.start()
-
-    def sync_action(self):
-
-        if self.auto_play:
-            with sd.OutputStream(samplerate=self.samplerate,
-                                 blocksize=self.block_size,
-                                 channels=self.output_channels,
-                                 dtype=self.dtype) as stream:
-
-                if isinstance(self.audio, np.ndarray):
-                    datas = split_list_by_n(self.audio, self.block_size)
-                    for data in datas:
-                        self.__call(data, stream)
-
-                elif isinstance(self.audio, str):
-                    with sf.SoundFile(self.audio) as f:
-                        while True:
-                            data = f.read(self.block_size, dtype=self.dtype)
-                            if not len(data):
-                                break
-                            self.__call(data, stream)
-
-                elif isinstance(self.audio, sf.SoundFile):
-                    while True:
-                        data = self.audio.read(self.block_size, dtype=self.dtype)
-                        if not len(data):
-                            break
-                        self.__call(data, stream)
-
-        else:
-            if isinstance(self.audio, np.ndarray):
-                datas = split_list_by_n(self.audio, self.block_size)
-                for data in datas:
-                    self.__call(data)
-
-            elif isinstance(self.audio, str):
-                with sf.SoundFile(self.audio) as f:
-                    while True:
-                        data = f.read(self.block_size, dtype=self.dtype)
-                        if not len(data):
-                            break
-                        self.__call(data)
-
-            elif isinstance(self.audio, sf.SoundFile):
-                while True:
-                    data = self.audio.read(self.block_size, dtype=self.dtype)
-                    if not len(data):
-                        break
-                    self.__call(data)
-
-        if self.finished_callback is not None:
-            self.finished_callback()
-
-    def __call(self, data: np.ndarray, stream: sd.OutputStream = None):
+    def call_adapter(self, data: np.ndarray, stream: sd.OutputStream = None):
         if stream is not None:
             stream.write(data)
         self.callback(audio2vowel(data), data)

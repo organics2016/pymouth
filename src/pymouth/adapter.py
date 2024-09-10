@@ -65,7 +65,7 @@ class VTSAdapter:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.vts.close()
 
-    def __db_callback(self, y, data):
+    def __db_callback(self, y: float, data):
 
         async def dd():
             await self.vts.request(
