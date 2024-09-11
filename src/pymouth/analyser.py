@@ -329,11 +329,11 @@ def audio2vowel(audio_data: np.ndarray) -> dict[str, float]:
 
     res = {
         'VoiceSilence': 1 if si_r == max else 0,
-        'VoiceA': a_r,
-        'VoiceI': i_r,
-        'VoiceU': u_r,
-        'VoiceE': e_r,
-        'VoiceO': o_r,
+        'VoiceA': a_r * 2 if a_r == max else a_r,
+        'VoiceI': i_r * 3 if i_r == max else i_r,
+        'VoiceU': u_r * 3 if u_r == max else u_r,
+        'VoiceE': e_r * 0.2 if e_r == max else e_r,
+        'VoiceO': o_r * 3 if o_r == max else o_r,
     }
 
     # res = {
