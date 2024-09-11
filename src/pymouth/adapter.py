@@ -12,7 +12,7 @@ class VTSAdapter:
     def __init__(self,
                  analyser: Type[Analyser],
                  db_vts_mouth_param: str = 'MouthOpen',
-                 vowel_vts_mouth_param: tuple[str] = ('VoiceSilence', 'VoiceA', 'VoiceI', 'VoiceU', 'VoiceE', 'VoiceO'),
+                 vowel_vts_mouth_param: dict[str, str] = None,
                  plugin_info: dict = None,
                  vts_api: dict = None
                  ):
@@ -20,10 +20,31 @@ class VTSAdapter:
         VTubeStudio Adapter.
         :param analyser: 分析仪,必须是 Analyser 的子类
         :param db_vts_mouth_param: 针对于DBAnalyser, VTS中控制mouth的参数,这个参数一般是 'MouthOpen'
-        :param vowel_vts_mouth_param: 针对于VowelAnalyser, VTS中控制mouth的参数,这个参数一般是 ('VoiceSilence', 'VoiceA', 'VoiceI', 'VoiceU', 'VoiceE', 'VoiceO')
+        :param vowel_vts_mouth_param: 针对于VowelAnalyser, VTS中控制mouth的参数,这个参数默认是 ('VoiceSilence', 'VoiceA', 'VoiceI', 'VoiceU', 'VoiceE', 'VoiceO')
+            如果你的VTS中不是这些默认值，你可以通过这个参数修改以匹配你VTS中关于AIUEO的输入参数
+            例如：{
+                    'VoiceSilence': 'CustomSilence',
+                    'VoiceA': 'CustomA',
+                    'VoiceI': 'CustomI',
+                    'VoiceU': 'CustomU',
+                    'VoiceE': 'CustomE',
+                    'VoiceO': 'CustomO'
+                }
+            这个dict中 key 不能变，value 则设置你自己VTS中关于AIUEO的输入参数
+
         :param plugin_info: 插件信息,可以自定义
         :param vts_api: VTS API的一些配置, 可以自定义 VTS server port
         """
+
+        if vowel_vts_mouth_param is None:
+            vowel_vts_mouth_param = {
+                'VoiceSilence': 'VoiceSilence',
+                'VoiceA': 'VoiceA',
+                'VoiceI': 'VoiceI',
+                'VoiceU': 'VoiceU',
+                'VoiceE': 'VoiceE',
+                'VoiceO': 'VoiceO'
+            }
 
         if plugin_info is None:
             plugin_info = {"plugin_name": "pymouth",
@@ -82,10 +103,12 @@ class VTSAdapter:
 
     def __vowel_callback(self, vowel_dict: dict, data):
         async def dd():
+            keys = [self.vowel_vts_mouth_param[x] for x in vowel_dict.keys()]
+            values = [x for x in vowel_dict.values()]
             await self.vts.request(
                 self.vts.vts_request.requestSetMultiParameterValue(
-                    parameters=[x for x in vowel_dict.keys()],
-                    values=[x for x in vowel_dict.values()]
+                    parameters=keys,
+                    values=values
                 )
             )
 
