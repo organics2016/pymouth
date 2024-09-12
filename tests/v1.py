@@ -92,11 +92,11 @@ def audio_test(audio_data: ndarray, axi: int) -> np.array:
     # spectrogram_abs = np.abs(spectrogram)
     # https://www.zdaiot.com/DeepLearningApplications/%E8%AF%AD%E9%9F%B3%E5%90%88%E6%88%90/%E8%AF%AD%E9%9F%B3%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/
     # 对线性声谱图应用mel滤波器后，取log，得到log梅尔声谱图，然后对log滤波能量（log梅尔声谱）做DCT离散余弦变换（傅里叶变换的一种），然后保留第2到第13个系数，得到的这12个系数就是MFCC
-    mfccs = librosa.feature.mfcc(y=audio_data, sr=22050, n_fft=512, dct_type=1, n_mfcc=13)
+    mfccs = librosa.feature.mfcc(y=audio_data, sr=22050, n_fft=512, dct_type=1, n_mfcc=3)[1:]
     # 13个系数 从0开始 取1到13个共12个
-    mfccs = mfccs[1:]
     print(mfccs.ndim)
     print(mfccs.shape)
+    print(mfccs)
     print(mfccs.T)
     buf = [[j for j in i] for i in mfccs.T]
     print(buf)
@@ -132,7 +132,8 @@ with sf.SoundFile('aiueo.wav') as f:
             break
 
         fs = np.append(fs, data)
-        if i == 35:
+        # A3 I13 U23 E35 O46
+        if i == 46:
             fs2 = data
 
 mfcc1 = audio_test(fs1, 1)
