@@ -274,8 +274,7 @@ def audio2vowel(audio_data: np.ndarray) -> dict[str, float]:
     audio_data = channel_conversion(audio_data)
 
     # 对线性声谱图应用mel滤波器后，取log，得到log梅尔声谱图，然后对log滤波能量（log梅尔声谱）做DCT离散余弦变换（傅里叶变换的一种），然后保留第2到第13个系数，得到的这12个系数就是MFCC
-    mfccs = librosa.feature.mfcc(y=audio_data, sr=22050, n_fft=512, dct_type=1, n_mfcc=13)[
-            1:].T  # 13个系数 从0开始 取1到13个共12个
+    mfccs = librosa.feature.mfcc(y=audio_data, sr=22050, n_fft=512, dct_type=1, n_mfcc=13)[1:].T
 
     if mfccs.shape[0] < 5:
         return {
@@ -318,22 +317,13 @@ def audio2vowel(audio_data: np.ndarray) -> dict[str, float]:
     elif o_r == max:
         print("O")
 
-    # res = {
-    #     'VoiceSilence': si_r if si_r != max else 1,
-    #     'VoiceA': a_r if a_r != max else 0.9,
-    #     'VoiceI': i_r if i_r != max else 0.9,
-    #     'VoiceU': u_r if u_r != max else 0.9,
-    #     'VoiceE': e_r if e_r != max else 0.9,
-    #     'VoiceO': o_r if o_r != max else 0.9,
-    # }
-
     res = {
         'VoiceSilence': 1 if si_r == max else 0,
-        'VoiceA': a_r * 2 if a_r == max else a_r,
-        'VoiceI': i_r * 3 if i_r == max else i_r,
-        'VoiceU': u_r * 3 if u_r == max else u_r,
-        'VoiceE': e_r * 0.2 if e_r == max else e_r,
-        'VoiceO': o_r * 3 if o_r == max else o_r,
+        'VoiceA': a_r * 2 if a_r == max else 0,
+        'VoiceI': i_r * 2 if i_r == max else 0,
+        'VoiceU': u_r * 2 if u_r == max else 0,
+        'VoiceE': e_r * 2 if e_r == max else 0,
+        'VoiceO': o_r * 2 if o_r == max else 0,
     }
 
     # res = {

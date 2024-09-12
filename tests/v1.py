@@ -132,7 +132,7 @@ with sf.SoundFile('aiueo.wav') as f:
             break
 
         fs = np.append(fs, data)
-        if i == 36:
+        if i == 35:
             fs2 = data
 
 mfcc1 = audio_test(fs1, 1)
