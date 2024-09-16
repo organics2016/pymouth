@@ -109,7 +109,7 @@ class DBAnalyser(Analyser):
                  finished_callback=None,
                  auto_play: bool = True,
                  dtype: np.dtype = np.float32,
-                 block_size: int = 1024):
+                 block_size: int = 2048):
         super().__init__(audio, samplerate, output_device, callback, finished_callback, auto_play,
                          dtype, block_size)
 
@@ -187,6 +187,7 @@ class VowelAnalyser(Analyser):
         # 对线性声谱图应用mel滤波器后，取log，得到log梅尔声谱图，然后对log滤波能量（log梅尔声谱）做DCT离散余弦变换（傅里叶变换的一种），然后保留第2到第13个系数，得到的这12个系数就是MFCC
         mfccs = librosa.feature.mfcc(y=audio_data, sr=22050, n_fft=512, dct_type=1, n_mfcc=3)[1:].T
 
+        # print(mfccs.shape)
         # 过短的音频会导致无法比较，直接按无声处理
         if mfccs.shape[0] < 5:
             return {
@@ -225,29 +226,29 @@ class VowelAnalyser(Analyser):
             'VoiceO': o_r + self.calibration['VoiceO'] if o_r == max else 0,
         }
 
-        if si_r == max:
-            # print("VoiceSilence")
-            pass
-        elif a_r == max:
-            print("A")
-            print(mfccs)
-            print(res)
-        elif i_r == max:
-            print("I")
-            print(mfccs)
-            print(res)
-        elif u_r == max:
-            print("U")
-            print(mfccs)
-            print(res)
-        elif e_r == max:
-            print("E")
-            print(mfccs)
-            print(res)
-        elif o_r == max:
-            print("O")
-            print(mfccs)
-            print(res)
+        # if si_r == max:
+        #     # print("VoiceSilence")
+        #     pass
+        # elif a_r == max:
+        #     print("A")
+        #     print(mfccs)
+        #     print(res)
+        # elif i_r == max:
+        #     print("I")
+        #     print(mfccs)
+        #     print(res)
+        # elif u_r == max:
+        #     print("U")
+        #     print(mfccs)
+        #     print(res)
+        # elif e_r == max:
+        #     print("E")
+        #     print(mfccs)
+        #     print(res)
+        # elif o_r == max:
+        #     print("O")
+        #     print(mfccs)
+        #     print(res)
 
         return res
 
