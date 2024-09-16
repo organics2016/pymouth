@@ -125,7 +125,7 @@ class VTSAdapter:
         启动分析器开始分析音频数据, 注意:此方法为非阻塞方法,会立即返回
         :param audio: 音频数据, 可以是文件path, 可以是SoundFile对象, 也可以是ndarray
         :param samplerate: 采样率, 这取决与音频数据的采样率, 如果你无法获取到音频数据的采样率, 可以尝试输出设备的采样率.
-        :param output_device: 输出设备通道, 这取决与你的硬件, 你也可以使用虚拟设备.
+        :param output_device: 输出设备Index, 这取决与硬件或虚拟设备. 可用 audio_devices_utils.py 打印当前系统音频设备信息
         :param finished_callback: 音频处理完成后,会回调这个方法
         :param auto_play: 是否自动播放音频, 默认为True, 如果为True,会播放音频(自动将audio写入指定output_channels)
         """
