@@ -117,7 +117,7 @@ class VTSAdapter:
     async def action(self,
                      audio: np.ndarray | str | sf.SoundFile,
                      samplerate: int | float,
-                     output_channels: int,
+                     output_device: int,
                      finished_callback=None,
                      auto_play: bool = True):
 
@@ -125,7 +125,7 @@ class VTSAdapter:
         启动分析器开始分析音频数据, 注意:此方法为非阻塞方法,会立即返回
         :param audio: 音频数据, 可以是文件path, 可以是SoundFile对象, 也可以是ndarray
         :param samplerate: 采样率, 这取决与音频数据的采样率, 如果你无法获取到音频数据的采样率, 可以尝试输出设备的采样率.
-        :param output_channels: 输出设备通道, 这取决与你的硬件, 你也可以使用虚拟设备.
+        :param output_device: 输出设备通道, 这取决与你的硬件, 你也可以使用虚拟设备.
         :param finished_callback: 音频处理完成后,会回调这个方法
         :param auto_play: 是否自动播放音频, 默认为True, 如果为True,会播放音频(自动将audio写入指定output_channels)
         """
@@ -133,7 +133,7 @@ class VTSAdapter:
         if self.analyser == DBAnalyser:
             with DBAnalyser(audio=audio,
                             samplerate=samplerate,
-                            output_channels=output_channels,
+                            output_device=output_device,
                             callback=self.__db_callback,
                             finished_callback=finished_callback,
                             auto_play=auto_play) as a:
@@ -141,7 +141,7 @@ class VTSAdapter:
         elif self.analyser == VowelAnalyser:
             with VowelAnalyser(audio=audio,
                                samplerate=samplerate,
-                               output_channels=output_channels,
+                               output_device=output_device,
                                callback=self.__vowel_callback,
                                finished_callback=finished_callback,
                                auto_play=auto_play) as a:
