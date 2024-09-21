@@ -26,22 +26,22 @@ pip install pymouth
 ### Get Started
 
 1. 在开始前你需要打开 `VTubeStudio` 的 Server 开关. 端口一般默认是8001.<br>
-   ![server_start.png](screenshot%2Fserver_start.png)
+   ![server_start.png](https://github.com/organics2016/pymouth/blob/master/screenshot/server_start.png)
 2. 你需要确定自己Live2D口型同步的支持参数.<br>
    请注意：下面提供一种简单的判断方式，但这种方式会修改(重置)Live2D模型口型部分参数，使用前请备份好自己的模型。<br>
    如果你对自己的模型了如指掌，可以跳过这步。<br>
-   点击按钮，会出现确认信息。<br>
-   ![setup.png](screenshot%2Fsetup.png)
+   ![setup.png](https://github.com/organics2016/pymouth/blob/master/screenshot/setup.png)
     - 确认重置参数后，如果出现以下信息，则说明你的模型仅支持 `基于分贝的口型同步`
-      ![db.png](screenshot%2Fdb.png)
+      ![db.png](https://github.com/organics2016/pymouth/blob/master/screenshot/db.png)
     - 确认重置参数后，如果出现以下信息，则说明你的模型仅支持 `基于元音的口型同步`
-      ![vowel.png](screenshot%2Fvowel.png)
+      ![vowel.png](https://github.com/organics2016/pymouth/blob/master/screenshot/vowel.png)
     - 如果VTubeStudio找到了所有参数，并且重置成功，说明两种方式都支持。只需要在接下来的代码中选择一种方式即可.
 
 3. 下面是两种基于不同方式的Demo.<br>
    你可以找一个音频文件替换`some.wav`.<br>
    `samplerate`:音频数据的采样率.<br>
-   `output_device`:输出设备Index. 可以参考`[audio_devices_utils.py](src%2Fpymouth%2Faudio_devices_utils.py)` <br>
+   `output_device`:输出设备Index.
+   可以参考[audio_devices_utils.py](https://github.com/organics2016/pymouth/blob/master/src/pymouth/audio_devices_utils.py)<br>
     - `基于分贝的口型同步`
     ```python
     import asyncio
