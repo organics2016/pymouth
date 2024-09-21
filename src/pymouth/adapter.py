@@ -19,8 +19,8 @@ class VTSAdapter:
         """
         VTubeStudio Adapter.
         :param analyser: 分析仪,必须是 Analyser 的子类
-        :param db_vts_mouth_param: 针对于DBAnalyser, VTS中控制mouth的参数,这个参数一般是 'MouthOpen'
-        :param vowel_vts_mouth_param: 针对于VowelAnalyser, VTS中控制mouth的参数,这个参数默认是 ('VoiceSilence', 'VoiceA', 'VoiceI', 'VoiceU', 'VoiceE', 'VoiceO')
+        :param db_vts_mouth_param: 仅作用于`DBAnalyser`, VTS中控制mouth_input的参数, 如果不是默认值请自行修改.
+        :param vowel_vts_mouth_param: 仅作用于VowelAnalyser, VTS中控制mouth的参数,这个参数默认是 ('VoiceSilence', 'VoiceA', 'VoiceI', 'VoiceU', 'VoiceE', 'VoiceO')
             如果你的VTS中不是这些默认值，你可以通过这个参数修改以匹配你VTS中关于AIUEO的输入参数
             例如：{
                     'VoiceSilence': 'CustomSilence',
@@ -33,7 +33,7 @@ class VTSAdapter:
             这个dict中 key 不能变，value 则设置你自己VTS中关于AIUEO的输入参数
 
         :param plugin_info: 插件信息,可以自定义
-        :param vts_api: VTS API的一些配置, 可以自定义 VTS server port
+        :param vts_api: VTS API的一些配置,这里可以自定义 VTS server port(8001)
         """
 
         if vowel_vts_mouth_param is None:
@@ -127,7 +127,7 @@ class VTSAdapter:
         :param samplerate: 采样率, 这取决与音频数据的采样率, 如果你无法获取到音频数据的采样率, 可以尝试输出设备的采样率.
         :param output_device: 输出设备Index, 这取决与硬件或虚拟设备. 可用 audio_devices_utils.py 打印当前系统音频设备信息
         :param finished_callback: 音频处理完成后,会回调这个方法
-        :param auto_play: 是否自动播放音频, 默认为True, 如果为True,会播放音频(自动将audio写入指定output_channels)
+        :param auto_play: 是否自动播放音频,默认为True,会播放音频(自动将audio写入指定`output_device`)
         """
 
         if self.analyser == DBAnalyser:
