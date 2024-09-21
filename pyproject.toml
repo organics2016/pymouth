@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pymouth"
-version = "1.0.2"
+version = "1.0.3"
 authors = [
     { name = "organics2016", email = "organics2015@outlook.com" },
 ]
@@ -40,5 +40,7 @@ Issues = "https://github.com/organics2016/pymouth/issues"
 
 [tool.hatch.build.targets.sdist]
 exclude = [
+    "/.github",
+    "/screenshot",
     "/tests",
 ]
