@@ -217,6 +217,7 @@ class VowelAnalyser(Analyser):
 
         max = np.max([si_r, a_r, i_r, u_r, e_r, o_r])
 
+        # TODO 这里可以加一个激活函数过滤噪音 
         res = {
             'VoiceSilence': 1 if si_r == max else 0,
             'VoiceA': a_r + self.calibration['VoiceA'] if a_r == max else 0,
