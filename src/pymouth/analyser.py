@@ -217,7 +217,22 @@ class VowelAnalyser(Analyser):
 
         max = np.max([si_r, a_r, i_r, u_r, e_r, o_r])
 
-        # TODO 这里可以加一个激活函数过滤噪音 
+        # log = f"Silence:{si_r}, A:{a_r}, I:{i_r}, U:{u_r}, E:{e_r}, O:{o_r}"
+        # if si_r == max:
+        #     log = log + " Max:Silence"
+        # elif a_r == max:
+        #     log = log + " Max:A"
+        # elif i_r == max:
+        #     log = log + " Max:I"
+        # elif u_r == max:
+        #     log = log + " Max:U"
+        # elif e_r == max:
+        #     log = log + " Max:E"
+        # elif o_r == max:
+        #     log = log + " Max:O"
+        # print(log)
+
+        # TODO 这里可以加一个激活函数过滤噪音 加入激活函数后会导致部分发音阈值过高，有待调整
         res = {
             'VoiceSilence': 1 if si_r == max else 0,
             'VoiceA': a_r + self.calibration['VoiceA'] if a_r == max else 0,
@@ -226,30 +241,6 @@ class VowelAnalyser(Analyser):
             'VoiceE': e_r + self.calibration['VoiceE'] if e_r == max else 0,
             'VoiceO': o_r + self.calibration['VoiceO'] if o_r == max else 0,
         }
-
-        # if si_r == max:
-        #     # print("VoiceSilence")
-        #     pass
-        # elif a_r == max:
-        #     print("A")
-        #     print(mfccs)
-        #     print(res)
-        # elif i_r == max:
-        #     print("I")
-        #     print(mfccs)
-        #     print(res)
-        # elif u_r == max:
-        #     print("U")
-        #     print(mfccs)
-        #     print(res)
-        # elif e_r == max:
-        #     print("E")
-        #     print(mfccs)
-        #     print(res)
-        # elif o_r == max:
-        #     print("O")
-        #     print(mfccs)
-        #     print(res)
 
         return res
 
