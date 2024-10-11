@@ -50,7 +50,7 @@ pip install pymouth
     
     async def main():
         async with VTSAdapter(DBAnalyser) as a:
-            await a.action(audio='some.wav', samplerate=44100, output_device=4)
+            await a.action(audio='some.wav', samplerate=44100, output_device=2)
             await asyncio.sleep(100000)  # do something
     
     
@@ -66,7 +66,7 @@ pip install pymouth
     
     async def main():
         async with VTSAdapter(VowelAnalyser) as a:
-            await a.action(audio='some.wav', samplerate=44100, output_device=4)
+            await a.action(audio='some.wav', samplerate=44100, output_device=2)
             await asyncio.sleep(100000)  # do something
     
     
@@ -85,7 +85,7 @@ pip install pymouth
 
 ```python
 async with VTSAdapter(DBAnalyser) as a:
-    await a.action(audio='some.wav', samplerate=44100, output_device=4)
+    await a.action(audio='some.wav', samplerate=44100, output_device=2)
 ```
 
 `VTSAdapter`以下是详细的参数说明:
@@ -121,7 +121,7 @@ def callback(y, data):
     print(y)  # do something
 
 
-with DBAnalyser('zh.wav', 44100, output_device=4, callback=callback) as a:
+with DBAnalyser('zh.wav', 44100, output_device=2, callback=callback) as a:
     a.async_action()  # no block
     # a.sync_action() # block
     print("end")
