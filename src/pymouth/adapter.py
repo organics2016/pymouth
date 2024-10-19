@@ -66,9 +66,12 @@ class VTSAdapter:
         self.vts_api = vts_api
 
         self.vts = pyvts.vts(plugin_info=self.plugin_info, vts_api_info=self.vts_api)
-        self.event_loop = asyncio.get_event_loop()
+        self.event_loop = None
+        self.is_sync = False
 
     async def __aenter__(self):
+        # self.event_loop 有两种情况：1、如果是同步调用，event_loop 为此程序创建。2、如果是协程，event_loop 为用户创建
+        self.event_loop = asyncio.get_running_loop()
         await self.vts.connect()
         try:
             await self.vts.read_token()
@@ -89,8 +92,17 @@ class VTSAdapter:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.vts.close()
 
-    def __db_callback(self, y: float, data):
+    def __enter__(self):
+        # 同步代码需要创建新的 event_loop,因为完全同步调用无协程，所以可以多次调用 run_until_complete, 直到 VTSAdapter 对象生命周期结束
+        self.event_loop = asyncio.new_event_loop()
+        self.is_sync = True
+        return self.event_loop.run_until_complete(self.__aenter__())
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.event_loop.run_until_complete(self.__aexit__(exc_type, exc_val, exc_tb))
+        self.event_loop.close()
+
+    def __db_callback(self, y: float, data):
         async def dd():
             await self.vts.request(
                 self.vts.vts_request.requestSetParameterValue(
@@ -99,7 +111,11 @@ class VTSAdapter:
                 )
             )
 
-        asyncio.run_coroutine_threadsafe(dd(), self.event_loop)
+        # 如果是同步调用，这段代码是由主线程阻塞调用，只用主线程执行event_loop即可。如果为异步协程，这段代码是由子线程非阻塞调用，所以要将子线程绑定到 主event_loop
+        if self.is_sync:
+            self.event_loop.run_until_complete(dd())
+        else:
+            asyncio.run_coroutine_threadsafe(dd(), self.event_loop)
 
     def __vowel_callback(self, vowel_dict: dict, data):
         async def dd():
@@ -112,7 +128,10 @@ class VTSAdapter:
                 )
             )
 
-        asyncio.run_coroutine_threadsafe(dd(), self.event_loop)
+        if self.is_sync:
+            self.event_loop.run_until_complete(dd())
+        else:
+            asyncio.run_coroutine_threadsafe(dd(), self.event_loop)
 
     async def action(self,
                      audio: np.ndarray | str | sf.SoundFile,
@@ -146,3 +165,36 @@ class VTSAdapter:
                                        finished_callback,
                                        auto_play,
                                        block_size=4096)
+
+    def action_block(self,
+                     audio: np.ndarray | str | sf.SoundFile,
+                     samplerate: int | float,
+                     output_device: int,
+                     finished_callback=None,
+                     auto_play: bool = True):
+
+        """
+        启动分析器开始分析音频数据, 注意:此方法为阻塞方法,不会立即返回
+        :param audio: 音频数据, 可以是文件path, 可以是SoundFile对象, 也可以是ndarray
+        :param samplerate: 采样率, 这取决与音频数据的采样率, 如果你无法获取到音频数据的采样率, 可以尝试输出设备的采样率.
+        :param output_device: 输出设备Index, 这取决与硬件或虚拟设备. 可用 audio_devices_utils.py 打印当前系统音频设备信息
+        :param finished_callback: 音频处理完成后,会回调这个方法
+        :param auto_play: 是否自动播放音频,默认为True,会播放音频(自动将audio写入指定`output_device`)
+        """
+
+        if isinstance(self.analyser, DBAnalyser):
+            self.analyser.sync_action(audio,
+                                      samplerate,
+                                      output_device,
+                                      self.__db_callback,
+                                      finished_callback,
+                                      auto_play,
+                                      block_size=2048)
+        elif isinstance(self.analyser, VowelAnalyser):
+            self.analyser.sync_action(audio,
+                                      samplerate,
+                                      output_device,
+                                      self.__vowel_callback,
+                                      finished_callback,
+                                      auto_play,
+                                      block_size=4096)
