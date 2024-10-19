@@ -29,14 +29,14 @@ class Analyser(metaclass=ABCMeta):
                      block_size: int = 1024):
 
         self.executor.submit(self.sync_action,
-                             audio,
-                             samplerate,
-                             output_device,
-                             callback,
-                             finished_callback,
-                             auto_play,
-                             dtype,
-                             block_size)
+                             *(audio,
+                               samplerate,
+                               output_device,
+                               callback,
+                               finished_callback,
+                               auto_play,
+                               dtype,
+                               block_size))
 
     def sync_action(self,
                     audio: np.ndarray | str | sf.SoundFile,
