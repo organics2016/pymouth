@@ -1,5 +1,5 @@
 from abc import ABCMeta
-from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
 
 import librosa
 import numpy as np
@@ -9,25 +9,8 @@ from dtw import dtw
 
 
 class Analyser(metaclass=ABCMeta):
-    def __init__(self,
-                 audio: np.ndarray | str | sf.SoundFile,
-                 samplerate: int | float,
-                 output_device: int,
-                 callback,
-                 finished_callback=None,
-                 auto_play: bool = True,
-                 dtype: np.dtype = np.float32,
-                 block_size: int = 1024):
-
-        self.audio = audio
-        self.samplerate = samplerate
-        self.output_device = output_device
-        self.callback = callback
-        self.finished_callback = finished_callback
-        self.auto_play = auto_play
-        self.dtype = dtype
-        self.block_size = block_size
-        self.thread = None
+    def __init__(self):
+        self.executor = ThreadPoolExecutor(1)
 
     def __enter__(self):
         return self
@@ -35,86 +18,101 @@ class Analyser(metaclass=ABCMeta):
     def __exit__(self, *args):
         pass
 
-    def async_action(self):
-        self.thread = Thread(target=self.sync_action)
-        self.thread.start()
+    def async_action(self,
+                     audio: np.ndarray | str | sf.SoundFile,
+                     samplerate: int | float,
+                     output_device: int,
+                     callback,
+                     finished_callback=None,
+                     auto_play: bool = True,
+                     dtype: np.dtype = np.float32,
+                     block_size: int = 1024):
 
-    def sync_action(self):
+        self.executor.submit(self.sync_action,
+                             audio,
+                             samplerate,
+                             output_device,
+                             callback,
+                             finished_callback,
+                             auto_play,
+                             dtype,
+                             block_size)
+
+    def sync_action(self,
+                    audio: np.ndarray | str | sf.SoundFile,
+                    samplerate: int | float,
+                    output_device: int,
+                    callback,
+                    finished_callback=None,
+                    auto_play: bool = True,
+                    dtype: np.dtype = np.float32,
+                    block_size: int = 1024):
 
         stream = None
         try:
-            if isinstance(self.audio, np.ndarray):
+            if isinstance(audio, np.ndarray):
                 # 声道验证
-                if self.audio.ndim <= 0 or self.audio.ndim > 2:
+                if audio.ndim <= 0 or audio.ndim > 2:
                     raise ValueError('Audio channel verification failed. Only single or dual channels are supported.')
 
-                stream = sd.OutputStream(samplerate=self.samplerate,
-                                         blocksize=self.block_size,
-                                         device=self.output_device,
-                                         channels=self.audio.ndim,  # if data.shape[1] != channels:
-                                         dtype=self.dtype).__enter__() if self.auto_play else None
+                stream = sd.OutputStream(samplerate=samplerate,
+                                         blocksize=block_size,
+                                         device=output_device,
+                                         channels=audio.ndim,  # if data.shape[1] != channels:
+                                         dtype=dtype).__enter__() if auto_play else None
 
-                datas = split_list_by_n(self.audio, self.block_size)
+                datas = split_list_by_n(audio, block_size)
                 for data in datas:
-                    self.process(data, stream)
+                    self.play(callback, data, stream)
 
-            elif isinstance(self.audio, str):
-                with sf.SoundFile(self.audio) as f:
+            elif isinstance(audio, str):
+                with sf.SoundFile(audio) as f:
                     stream = sd.OutputStream(samplerate=f.samplerate,
-                                             blocksize=self.block_size,
-                                             device=self.output_device,
+                                             blocksize=block_size,
+                                             device=output_device,
                                              channels=f.channels,
-                                             dtype=self.dtype).__enter__() if self.auto_play else None
+                                             dtype=dtype).__enter__() if auto_play else None
                     while True:
-                        data = f.read(self.block_size, dtype=self.dtype)
+                        data = f.read(block_size, dtype=dtype)
                         if not len(data):
                             break
-                        self.process(data, stream)
+                        self.play(callback, data, stream)
 
-            elif isinstance(self.audio, sf.SoundFile):
-                stream = sd.OutputStream(samplerate=self.audio.samplerate,
-                                         blocksize=self.block_size,
-                                         device=self.output_device,
-                                         channels=self.audio.channels,
-                                         dtype=self.dtype).__enter__() if self.auto_play else None
+            elif isinstance(audio, sf.SoundFile):
+                stream = sd.OutputStream(samplerate=audio.samplerate,
+                                         blocksize=block_size,
+                                         device=output_device,
+                                         channels=audio.channels,
+                                         dtype=dtype).__enter__() if auto_play else None
 
                 while True:
-                    data = self.audio.read(self.block_size, dtype=self.dtype)
+                    data = audio.read(block_size, dtype=dtype)
                     if not len(data):
                         break
-                    self.process(data, stream)
+                    self.play(callback, data, stream)
 
         finally:
             if stream is not None:
                 stream.__exit__()
 
-            if self.finished_callback is not None:
-                self.finished_callback()
+            if finished_callback is not None:
+                finished_callback()
 
-    def process(self, data: np.ndarray, stream: sd.OutputStream):
+    def play(self, callback, data: np.ndarray, stream: sd.OutputStream):
         if stream is not None:
             stream.write(data)
-        self.call_adapter(data)
+        callback(self.process(data), data)
 
-    def call_adapter(self, data: np.ndarray):
+    def process(self, data: np.ndarray):
         pass
 
 
 class DBAnalyser(Analyser):
-    def __init__(self,
-                 audio: np.ndarray | str | sf.SoundFile,
-                 samplerate: int | float,
-                 output_device: int,
-                 callback,
-                 finished_callback=None,
-                 auto_play: bool = True,
-                 dtype: np.dtype = np.float32,
-                 block_size: int = 2048):
-        super().__init__(audio, samplerate, output_device, callback, finished_callback, auto_play,
-                         dtype, block_size)
+    def __init__(self):
+        super().__init__()
 
-    def call_adapter(self, data: np.ndarray, stream: sd.OutputStream = None):
-        self.callback(self.__audio2db(data), data)
+    def process(self, data: np.ndarray):
+        return self.__audio2db(data)
 
     def __audio2db(self, audio_data: np.ndarray) -> float:
         audio_data = channel_conversion(audio_data)
@@ -153,18 +151,9 @@ class VowelAnalyser(Analyser):
     V_O = [[209.67409, 0.3272565], [207.94513, 5.8133316]]
     V_Silence = [[50.040688, 15.370534], [61.82225, 18.227924]]
 
-    def __init__(self,
-                 audio: np.ndarray | str | sf.SoundFile,
-                 samplerate: int | float,
-                 output_device: int,
-                 callback,
-                 finished_callback=None,
-                 auto_play: bool = True,
-                 dtype: np.dtype = np.float32,
-                 block_size: int = 4096,
-                 calibration: dict[str, float] = None):
-        super().__init__(audio, samplerate, output_device, callback, finished_callback, auto_play,
-                         dtype, block_size)
+    def __init__(self, calibration: dict[str, float] = None):
+        super().__init__()
+
         if calibration is None:
             calibration = {
                 'VoiceSilence': 1.0,
@@ -174,11 +163,10 @@ class VowelAnalyser(Analyser):
                 'VoiceE': 0.2,
                 'VoiceO': 0.2,
             }
-
         self.calibration = calibration
 
-    def call_adapter(self, data: np.ndarray, stream: sd.OutputStream = None):
-        self.callback(self.__audio2vowel(data), data)
+    def process(self, data: np.ndarray):
+        return self.__audio2vowel(data)
 
     def __audio2vowel(self, audio_data: np.ndarray) -> dict[str, float]:
         audio_data = channel_conversion(audio_data)

@@ -59,7 +59,7 @@ class VTSAdapter:
                 "port": 8001
             }
 
-        self.analyser = analyser
+        self.analyser = analyser()
         self.db_vts_mouth_param = db_vts_mouth_param
         self.vowel_vts_mouth_param = vowel_vts_mouth_param
         self.plugin_info = plugin_info
@@ -130,19 +130,19 @@ class VTSAdapter:
         :param auto_play: 是否自动播放音频,默认为True,会播放音频(自动将audio写入指定`output_device`)
         """
 
-        if self.analyser == DBAnalyser:
-            with DBAnalyser(audio=audio,
-                            samplerate=samplerate,
-                            output_device=output_device,
-                            callback=self.__db_callback,
-                            finished_callback=finished_callback,
-                            auto_play=auto_play) as a:
-                a.async_action()
-        elif self.analyser == VowelAnalyser:
-            with VowelAnalyser(audio=audio,
-                               samplerate=samplerate,
-                               output_device=output_device,
-                               callback=self.__vowel_callback,
-                               finished_callback=finished_callback,
-                               auto_play=auto_play) as a:
-                a.async_action()
+        if isinstance(self.analyser, DBAnalyser):
+            self.analyser.async_action(audio,
+                                       samplerate,
+                                       output_device,
+                                       self.__db_callback,
+                                       finished_callback,
+                                       auto_play,
+                                       block_size=2048)
+        elif isinstance(self.analyser, VowelAnalyser):
+            self.analyser.async_action(audio,
+                                       samplerate,
+                                       output_device,
+                                       self.__vowel_callback,
+                                       finished_callback,
+                                       auto_play,
+                                       block_size=4096)
