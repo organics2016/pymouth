@@ -36,7 +36,7 @@ class Analyser(metaclass=ABCMeta):
                                finished_callback,
                                auto_play,
                                dtype,
-                               block_size))
+                               block_size)).result()
 
     def sync_action(self,
                     audio: np.ndarray | str | sf.SoundFile,
