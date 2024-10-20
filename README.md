@@ -77,6 +77,35 @@ pip install pymouth
    第一次运行程序时, `VTubeStudio`会弹出插件授权界面, 通过授权后, 插件会在runtime路径下生成`pymouth_vts_token.txt`文件,
    之后运行不会重复授权, 除非token文件丢失或在`VTubeStudio`移除授权.<br>
 
+## New Features
+
+从v1.1.0 版本之后 High Level 支持同步调用,下面是一个简单的例子.<br>
+剔除async关键字，用完全 同步阻塞 的调用方式方便使用多线程管理。对于AI等CPU密集型场景，使用线程而不是协程可能会更好。
+
+```python
+import threading
+from time import sleep
+
+from pymouth import VTSAdapter, DBAnalyser
+
+
+def t1():
+    # 下面的代码都是 同步且阻塞
+    with VTSAdapter(DBAnalyser) as a:
+        a.action_block(audio='light_the_sea.wav', samplerate=44100, output_device=2)
+        print("end")
+
+
+def main():
+    threading.Thread(target=t1).start()
+    sleep(10000)  # do something
+    print("end main")
+
+
+if __name__ == "__main__":
+    main()
+```
+
 ## More Details
 
 ### High Level
