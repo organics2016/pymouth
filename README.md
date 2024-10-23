@@ -77,29 +77,89 @@ pip install pymouth
    第一次运行程序时, `VTubeStudio`会弹出插件授权界面, 通过授权后, 插件会在runtime路径下生成`pymouth_vts_token.txt`文件,
    之后运行不会重复授权, 除非token文件丢失或在`VTubeStudio`移除授权.<br>
 
-## New Features
+## About AI
 
-从v1.1.0 版本之后 High Level 支持同步调用,下面是一个简单的例子.<br>
-剔除async关键字，用完全 同步阻塞 的调用方式方便使用多线程管理。对于AI等CPU密集型场景，使用线程而不是协程可能会更好。
+下面是一个比较完整的使用pymouth作为AI TTS消费者的例子。
 
 ```python
-import threading
-from time import sleep
-
+import asyncio.queues as queues
+import logging
+import time
+import asyncio
+from asyncio import QueueFull
+from melo.api import TTS
 from pymouth import VTSAdapter, DBAnalyser
+from concurrent.futures.thread import ThreadPoolExecutor
 
 
-def t1():
-    # 下面的代码都是 同步且阻塞
-    with VTSAdapter(DBAnalyser) as a:
-        a.action_block(audio='light_the_sea.wav', samplerate=44100, output_device=2)
-        print("end")
+class SpeakMsg:
+    def __init__(self, msg: str, required: bool):
+        self.msg = msg
+        self.required = required
+        self.create_timestamp = time.time()
+        self.create_datetime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.create_timestamp))
+
+
+class Speaker:
+    def __init__(self):
+        self.queue = queues.Queue(2)
+        self.ready = True
+
+    def finished_callback(self):
+        self.ready = True
+
+    async def start(self):
+        tts_model = TTS(language='ZH', device='cuda:0')
+        speaker_ids = tts_model.hps.data.spk2id
+
+        plugin_info = {"plugin_name": "kanojyo2",
+                       "developer": "organics",
+                       "authentication_token_path": "./pymouth_vts_token.txt",
+                       "plugin_icon": None}
+
+        async with VTSAdapter(DBAnalyser, plugin_info=plugin_info) as a:
+            while True:
+                msg: SpeakMsg = await self.queue.get()
+                audio = tts_model.tts_to_file(msg.msg, speaker_ids['ZH'], output_path=None, speed=1.0)
+
+                # a.action() 会立即返回，但音频可能还在播放，再未播放完音频前重新消费可能不是你所期望的。
+                # 尽管 pymouth 会自己管理音频播放顺序(自己管理播放队列，同一时刻只会播放一段音频)。但像下面这样阻断消费可能是更好的选择
+                while not self.ready:
+                    await asyncio.sleep(1)
+                self.ready = False
+
+                await a.action(audio=audio,
+                               samplerate=tts_model.hps.data.sampling_rate,
+                               output_device=2,
+                               finished_callback=self.finished_callback)
+
+    async def speak(self, msg: str, required=True):
+        if required:
+            await self.queue.put(SpeakMsg(msg, required))
+        else:
+            try:
+                self.queue.put_nowait(SpeakMsg(msg, required))
+            except QueueFull:
+                logging.warning('Queue is full')
+
+
+speakers = Speaker()
+event_loop = asyncio.get_event_loop()
+
+
+def producer_callback(msg: str):
+    async def mm():
+        await speakers.speak(msg)
+
+    # 生产者可能来自于不同线程，需要event_loop跨线程调用
+    asyncio.run_coroutine_threadsafe(mm(), event_loop)
 
 
 def main():
-    threading.Thread(target=t1).start()
-    sleep(10000)  # do something
-    print("end main")
+    with ThreadPoolExecutor(2) as executor:
+        # 这里的实现只作为参考而不是建议。没有让协程覆盖程序的整个生命周期是因为：对于AI等CPU密集型场景，使用线程而不是协程可能会更好。
+        executor.submit(event_loop.run_until_complete, speakers.start())
+        # do something
 
 
 if __name__ == "__main__":

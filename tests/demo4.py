@@ -29,7 +29,7 @@ async def t1():
 
 def main():
     with ThreadPoolExecutor(2) as executor:
-        executor.submit(asyncio.run, t1())
+        executor.submit(asyncio.run, t1()).add_done_callback(thread_pool_callback)
 
     print("end main")
     time.sleep(100000)
