@@ -207,7 +207,7 @@ import time
 from pymouth import DBAnalyser
 
 
-def callback(y, data):
+def callback(y: float, data):
    # Y is the Y coordinate of the model's mouth.
    # Like is 0.4212883452
    print(y)  # do something
