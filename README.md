@@ -203,19 +203,50 @@ Get Started 演示了一种High Level API 如果你不使用 `VTubeStudio` 或�
 
 ```python
 import time
+
 from pymouth import DBAnalyser
 
 
 def callback(y, data):
-    print(y)  # do something
+   # Y is the Y coordinate of the model's mouth
+   print(y)  # do something
 
 
-with DBAnalyser('zh.wav', 44100, output_device=2, callback=callback) as a:
-    a.async_action()  # no block
+with DBAnalyser() as a:
+   a.async_action('zh.wav', 44100, output_device=2, callback=callback)  # no block
+   # a.sync_action()  # block
+   print("end")
+   time.sleep(1000000)
+```
+
+```python
+import time
+
+from pymouth import VowelAnalyser
+
+
+def callback(md: dict[str, float], data):
+    """
+    md like is:
+    {
+        'VoiceSilence': 0,
+        'VoiceA': 0.6547555255,
+        'VoiceI': 0.2872873444,
+        'VoiceU': 0.1034789232,
+        'VoiceE': 0.3927834533,
+        'VoiceO': 0.1927834548,
+    }
+    """
+    print(md)  # do something
+
+
+with VowelAnalyser() as a:
+    a.async_action('zh.wav', 44100, output_device=2, callback=callback)  # no block
     # a.sync_action() # block
     print("end")
     time.sleep(1000000)
 ```
+
 
 ## TODO
 

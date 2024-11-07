@@ -3,7 +3,7 @@ import time
 from src.pymouth import DBAnalyser
 
 
-def callback(y, data):
+def callback(y: float, data):
     print(y)
 
 
