@@ -42,7 +42,7 @@ def test1():
 
 def test2():
     with DBAnalyser('zh.wav', 44100, 4, callback=callback) as a:
-        a.async_action()
+        a.action_noblock()
         print("end")
         time.sleep(1000000)
 

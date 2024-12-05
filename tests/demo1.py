@@ -1,14 +1,14 @@
-import asyncio
+import time
 
 from src.pymouth.adapter import VTSAdapter
 from src.pymouth.analyser import DBAnalyser
 
 
-async def main():
-    async with VTSAdapter(DBAnalyser) as a:
-        await a.action(audio='light_the_sea.wav', samplerate=44100, output_device=2)
-        await asyncio.sleep(100000)
+def main():
+    with VTSAdapter(DBAnalyser) as a:
+        a.action(audio='light_the_sea.wav', samplerate=44100, output_device=2)
+        time.sleep(100000)  # do something
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

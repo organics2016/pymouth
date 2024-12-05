@@ -43,41 +43,62 @@ pip install pymouth
    `output_device`:输出设备Index.
    可以参考[audio_devices_utils.py](https://github.com/organics2016/pymouth/blob/master/src/pymouth/audio_devices_utils.py)<br>
     - `基于分贝的口型同步`
-    ```python
-    import asyncio
-    from pymouth import VTSAdapter, DBAnalyser
+       ```python
+       import time
+       from pymouth import VTSAdapter, DBAnalyser
+    
+       def main():
+         with VTSAdapter(DBAnalyser) as a:
+             a.action(audio='some.wav', samplerate=44100, output_device=2)
+             time.sleep(100000)  # do something
     
     
-    async def main():
-        async with VTSAdapter(DBAnalyser) as a:
-            await a.action(audio='some.wav', samplerate=44100, output_device=2)
-            await asyncio.sleep(100000)  # do something
-    
-    
-    if __name__ == "__main__":
-        asyncio.run(main())
-    ```
+       if __name__ == "__main__":
+         main()
+       ```
 
     - `基于元音的口型同步`
-    ```python
-    import asyncio
-    from pymouth import VTSAdapter, VowelAnalyser
+       ```python
+       import time
+       from pymouth import VTSAdapter, VowelAnalyser
+    
+       def main():
+         with VTSAdapter(VowelAnalyser) as a:
+             a.action(audio='some.wav', samplerate=44100, output_device=2)
+             time.sleep(100000)  # do something
     
     
-    async def main():
-        async with VTSAdapter(VowelAnalyser) as a:
-            await a.action(audio='some.wav', samplerate=44100, output_device=2)
-            await asyncio.sleep(100000)  # do something
-    
-    
-    if __name__ == "__main__":
-        asyncio.run(main())
-    ```
+       if __name__ == "__main__":
+         main()
+       ```
 
-   第一次运行程序时, `VTubeStudio`会弹出插件授权界面, 通过授权后, 插件会在runtime路径下生成`pymouth_vts_token.txt`文件,
-   之后运行不会重复授权, 除非token文件丢失或在`VTubeStudio`移除授权.<br>
+      第一次运行程序时, `VTubeStudio`会弹出插件授权界面, 通过授权后, 插件会在runtime路径下生成`pymouth_vts_token.txt`文件,
+      之后运行不会重复授权, 除非token文件丢失或在`VTubeStudio`移除授权.<br>
 
-## About AI
+## API变化
+
+1.2.0版本之后，移除了所有函数的协程调用方式(async/await)，协程调用具有传染性，不利于用户维护。<br>
+目前只提供阻塞与非阻塞调用方式，非阻塞方式由内部线程池单线程实现，即无论`a.action`
+被调用多少次，都会按照调用的现后顺序播放音频。<br>
+
+- 如果你仍使用协程启动，可以参考下面的示例
+   ```python
+   import asyncio
+   from pymouth import VTSAdapter, VowelAnalyser
+   
+   
+   async def main():
+       with VTSAdapter(VowelAnalyser) as a:
+           a.action(audio='aiueo.wav', samplerate=44100, output_device=2)  # no-block
+           # a.action_block(audio='aiueo.wav', samplerate=44100, output_device=2) # block
+           await asyncio.sleep(100000)
+   
+   
+   if __name__ == "__main__":
+       asyncio.run(main())
+   ```
+
+## About AI(废弃，下面的例子任然使用旧版本的协程调用方式，1.2.0以后的版本需要稍作修改)
 
 下面是一个比较完整的使用pymouth作为AI TTS消费者的例子。
 
@@ -170,11 +191,11 @@ if __name__ == "__main__":
 
 ### High Level
 
-关键的代码只有两行,且都是异步的:
+关键的代码只有两行:
 
 ```python
-async with VTSAdapter(DBAnalyser) as a:
-    await a.action(audio='some.wav', samplerate=44100, output_device=2)
+with VTSAdapter(DBAnalyser) as a:
+    a.action(audio='some.wav', samplerate=44100, output_device=2)
 ```
 
 `VTSAdapter`以下是详细的参数说明:
@@ -184,8 +205,8 @@ async with VTSAdapter(DBAnalyser) as a:
 | `analyser`              | Y        |                 | 分析仪,必须是 Analyser 的子类,目前支持`DBAnalyser`和`VowelAnalyser`    |
 | `db_vts_mouth_param`    |          | `'MouthOpen'`   | 仅作用于`DBAnalyser`, VTS中控制mouth_input的参数, 如果不是默认值请自行修改.    |
 | `vowel_vts_mouth_param` |          | `dict[str,str]` | 仅作用于`VowelAnalyser`, VTS中控制mouth_input的参数, 如果不是默认值请自行修改. |
+| `ws_uri`                |          | `str`           | websocket uri 默认：ws://localhost:8001                     |
 | `plugin_info`           |          | `dict`          | 插件信息,可以自定义                                               |
-| `vts_api`               |          | `dict`          | VTS API的一些配置,这里可以自定义 VTS server port(8001)               |
 
 `await a.action()` 会开始处理音频数据. 以下是详细的参数说明:
 
@@ -208,16 +229,16 @@ from pymouth import DBAnalyser
 
 
 def callback(y: float, data):
-   # Y is the Y coordinate of the model's mouth.
-   # Like is 0.4212883452
-   print(y)  # do something
+    # Y is the Y coordinate of the model's mouth.
+    # Like is 0.4212883452
+    print(y)  # do something
 
 
 with DBAnalyser() as a:
-   a.async_action('zh.wav', 44100, output_device=2, callback=callback)  # no block
-   # a.sync_action()  # block
-   print("end")
-   time.sleep(1000000)
+    a.action_noblock('zh.wav', 44100, output_device=2, callback=callback)  # no block
+    # a.action_block()  # block
+    print("end")
+    time.sleep(1000000)
 ```
 
 ```python
@@ -227,27 +248,26 @@ from pymouth import VowelAnalyser
 
 
 def callback(md: dict[str, float], data):
-   """
-   md like is:
-   {
-       'VoiceSilence': 0,
-       'VoiceA': 0.6547555255,
-       'VoiceI': 0.2872873444,
-       'VoiceU': 0.1034789232,
-       'VoiceE': 0.3927834533,
-       'VoiceO': 0.1927834548,
-   }
-   """
-   print(md)  # do something
+    """
+    md like is:
+    {
+        'VoiceSilence': 0,
+        'VoiceA': 0.6547555255,
+        'VoiceI': 0.2872873444,
+        'VoiceU': 0.1034789232,
+        'VoiceE': 0.3927834533,
+        'VoiceO': 0.1927834548,
+    }
+    """
+    print(md)  # do something
 
 
 with VowelAnalyser() as a:
-   a.async_action('zh.wav', 44100, output_device=2, callback=callback)  # no block
-   # a.sync_action() # block
-   print("end")
-   time.sleep(1000000)
+    a.action_noblock('zh.wav', 44100, output_device=2, callback=callback)  # no block
+    # a.action_block() # block
+    print("end")
+    time.sleep(1000000)
 ```
-
 
 ## TODO
 

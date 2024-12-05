@@ -1,14 +1,14 @@
 import time
 
-from src.pymouth import DBAnalyser
+from src.pymouth.adapter import VTSAdapter
+from src.pymouth.analyser import VowelAnalyser
 
 
-def callback(y: float, data):
-    print(y)
+def main():
+    with VTSAdapter(VowelAnalyser) as a:
+        a.action(audio='light_the_sea.wav', samplerate=44100, output_device=2)
+        time.sleep(100000)  # do something
 
 
-with DBAnalyser() as a:
-    a.async_action('zh.wav', 44100, output_device=2, callback=callback)
-    # a.sync_action()
-    print("end")
-    time.sleep(1000000)
+if __name__ == "__main__":
+    main()

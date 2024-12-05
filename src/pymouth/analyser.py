@@ -18,17 +18,17 @@ class Analyser(metaclass=ABCMeta):
     def __exit__(self, *args):
         pass
 
-    def async_action(self,
-                     audio: np.ndarray | str | sf.SoundFile,
-                     samplerate: int | float,
-                     output_device: int,
-                     callback,
-                     finished_callback=None,
-                     auto_play: bool = True,
-                     dtype: np.dtype = np.float32,
-                     block_size: int = 1024):
+    def action_noblock(self,
+                       audio: np.ndarray | str | sf.SoundFile,
+                       samplerate: int | float,
+                       output_device: int,
+                       callback,
+                       finished_callback=None,
+                       auto_play: bool = True,
+                       dtype: np.dtype = np.float32,
+                       block_size: int = 1024):
 
-        self.executor.submit(self.sync_action,
+        self.executor.submit(self.action_block,
                              *(audio,
                                samplerate,
                                output_device,
@@ -38,15 +38,15 @@ class Analyser(metaclass=ABCMeta):
                                dtype,
                                block_size))
 
-    def sync_action(self,
-                    audio: np.ndarray | str | sf.SoundFile,
-                    samplerate: int | float,
-                    output_device: int,
-                    callback,
-                    finished_callback=None,
-                    auto_play: bool = True,
-                    dtype: np.dtype = np.float32,
-                    block_size: int = 1024):
+    def action_block(self,
+                     audio: np.ndarray | str | sf.SoundFile,
+                     samplerate: int | float,
+                     output_device: int,
+                     callback,
+                     finished_callback=None,
+                     auto_play: bool = True,
+                     dtype: np.dtype = np.float32,
+                     block_size: int = 1024):
 
         stream = None
         try:
