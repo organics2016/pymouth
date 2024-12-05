@@ -195,8 +195,12 @@ if __name__ == "__main__":
 
 ```python
 with VTSAdapter(DBAnalyser) as a:
-    a.action(audio='some.wav', samplerate=44100, output_device=2)
+    a.action(audio='some.wav', samplerate=44100, output_device=2)  # no-block
+    # a.action_block(audio='aiueo.wav', samplerate=44100, output_device=2) # block
 ```
+
+`a.action()`非阻塞，会立即返回，由程序内部维护线程池和队列。<br>
+`a.action_block()`阻塞，直到音频播放和处理完毕才会返回，纯同步代码无线程，线程由调用者维护。<br>
 
 `VTSAdapter`以下是详细的参数说明:
 
@@ -208,7 +212,7 @@ with VTSAdapter(DBAnalyser) as a:
 | `ws_uri`                |          | `str`           | websocket uri 默认：ws://localhost:8001                     |
 | `plugin_info`           |          | `dict`          | 插件信息,可以自定义                                               |
 
-`await a.action()` 会开始处理音频数据. 以下是详细的参数说明:
+`a.action()` 会开始处理音频数据. 以下是详细的参数说明:
 
 | param               | required | default | describe                                                        |
 |:--------------------|:---------|:--------|:----------------------------------------------------------------|
