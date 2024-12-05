@@ -1,11 +1,23 @@
-import asyncio
 from typing import Type
 
 import numpy as np
-import pyvts
 import soundfile as sf
 
 from .analyser import Analyser, DBAnalyser, VowelAnalyser
+from .vts_websockets import VTSWebSocket, VTSPluginInfo, VTSParameterData
+
+
+class VTSMouthParam:
+    def __init__(self,
+                 type: str,
+                 db_key: str = 'MouthOpen',
+                 vowel_silence_key: str = 'VoiceSilence',
+                 vowel_a_key: str = 'VoiceA',
+                 vowel_i_key: str = 'VoiceI',
+                 vowel_u_key: str = 'VoiceU',
+                 vowel_e_key: str = 'VoiceE',
+                 vowel_o_key: str = 'VoiceO'):
+        self.type = type,
 
 
 class VTSAdapter:
@@ -13,8 +25,11 @@ class VTSAdapter:
                  analyser: Type[Analyser],
                  db_vts_mouth_param: str = 'MouthOpen',
                  vowel_vts_mouth_param: dict[str, str] = None,
-                 plugin_info: dict = None,
-                 vts_api: dict = None
+                 ws_uri: str = 'ws://localhost:8001',
+                 plugin_info: VTSPluginInfo = VTSPluginInfo(plugin_name='pymouth',
+                                                            developer='organics',
+                                                            authentication_token_path='./pymouth_vts_token.txt',
+                                                            plugin_icon=None)
                  ):
         """
         VTubeStudio Adapter.
@@ -46,86 +61,62 @@ class VTSAdapter:
                 'VoiceO': 'VoiceO'
             }
 
-        if plugin_info is None:
-            plugin_info = {"plugin_name": "pymouth",
-                           "developer": "organics",
-                           "authentication_token_path": "./pymouth_vts_token.txt",
-                           "plugin_icon": None}
-
-        if vts_api is None:
-            vts_api = {
-                "version": "1.0",
-                "name": "VTubeStudioPublicAPI",
-                "port": 8001
-            }
-
         self.analyser = analyser()
         self.db_vts_mouth_param = db_vts_mouth_param
         self.vowel_vts_mouth_param = vowel_vts_mouth_param
+        self.ws_uri = ws_uri
         self.plugin_info = plugin_info
-        self.vts_api = vts_api
 
-        self.vts = pyvts.vts(plugin_info=self.plugin_info, vts_api_info=self.vts_api)
+        self.vts = VTSWebSocket(ws_uri, plugin_info)
         # 必须使用 get_running_loop 拿不到会报错，而不是新建 event_loop，event_loop由调用者维护。
-        self.event_loop = asyncio.get_running_loop()
+        # self.event_loop = asyncio.get_running_loop()
 
-    async def __aenter__(self):
-        await self.vts.connect()
-        try:
-            await self.vts.read_token()
-            auth = await self.vts.request_authenticate()  # use token
-            if not auth:
-                raise Exception('Not fond token or the token is expired')
-
-        except Exception as e:
-            print(e)
-            await self.vts.request_authenticate_token()  # get token
-            await self.vts.write_token()
-            auth = await self.vts.request_authenticate()  # use token
-            if not auth:
-                raise Exception('VTubeStudio Server error')
-
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.vts.close()
-
-    # 同步创建方式会导致 websockets 自动断开，使用新线程维护链接任然会断开，此问题暂时无解，这个初始化方法被抛弃
-    # def __enter__(self):
-    #     # 同步代码需要创建新的 event_loop,因为完全同步调用无协程，所以可以多次调用 run_until_complete, 直到 VTSAdapter 对象生命周期结束
-    #     self.event_loop = asyncio.new_event_loop()
-    #     self.is_sync = True
-    #     self.event_loop.run_until_complete(self.__aenter__())
+    # async def __aenter__(self):
+    #     await self.vts.connect()
+    #     try:
+    #         await self.vts.read_token()
+    #         auth = await self.vts.request_authenticate()  # use token
+    #         if not auth:
+    #             raise Exception('Not fond token or the token is expired')
+    #
+    #     except Exception as e:
+    #         print(e)
+    #         await self.vts.request_authenticate_token()  # get token
+    #         await self.vts.write_token()
+    #         auth = await self.vts.request_authenticate()  # use token
+    #         if not auth:
+    #             raise Exception('VTubeStudio Server error')
+    #
     #     return self
     #
-    # def __exit__(self, exc_type, exc_val, exc_tb):
-    #     self.event_loop.run_until_complete(self.__aexit__(exc_type, exc_val, exc_tb))
-    #     self.event_loop.close()
+    # async def __aexit__(self, exc_type, exc_val, exc_tb):
+    #     await self.vts.close()
+
+    def __enter__(self):
+        self.vts.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.vts.close()
+
+    # def __db_callback(self, y: float, data):
+    #     async def dd():
+    #         await self.vts.request(
+    #             self.vts.vts_request.requestSetParameterValue(
+    #                 parameter=self.db_vts_mouth_param,
+    #                 value=y,
+    #             )
+    #         )
+    #
+    #     # 当前函数由插件自己的线程池调用，event_loop由用户维护，所以需要将插件自己的线程绑定到主event_loop
+    #     asyncio.run_coroutine_threadsafe(dd(), self.event_loop)
 
     def __db_callback(self, y: float, data):
-        async def dd():
-            await self.vts.request(
-                self.vts.vts_request.requestSetParameterValue(
-                    parameter=self.db_vts_mouth_param,
-                    value=y,
-                )
-            )
-
-        # 当前函数由插件自己的线程池调用，event_loop由用户维护，所以需要将插件自己的线程绑定到主event_loop
-        asyncio.run_coroutine_threadsafe(dd(), self.event_loop)
+        self.vts.set_single_param(VTSParameterData(self.db_vts_mouth_param, y))
 
     def __vowel_callback(self, vowel_dict: dict, data):
-        async def dd():
-            keys = [self.vowel_vts_mouth_param[x] for x in vowel_dict.keys()]
-            values = [x for x in vowel_dict.values()]
-            await self.vts.request(
-                self.vts.vts_request.requestSetMultiParameterValue(
-                    parameters=keys,
-                    values=values
-                )
-            )
-
-        asyncio.run_coroutine_threadsafe(dd(), self.event_loop)
+        params = [VTSParameterData(self.vowel_vts_mouth_param[k], v) for k, v in vowel_dict.items()]
+        self.vts.set_params(params)
 
     async def action(self,
                      audio: np.ndarray | str | sf.SoundFile,
@@ -159,3 +150,27 @@ class VTSAdapter:
                                        finished_callback,
                                        auto_play,
                                        block_size=4096)
+
+    def sync_action(self,
+                    audio: np.ndarray | str | sf.SoundFile,
+                    samplerate: int | float,
+                    output_device: int,
+                    finished_callback=None,
+                    auto_play: bool = True):
+
+        if isinstance(self.analyser, DBAnalyser):
+            self.analyser.sync_action(audio,
+                                      samplerate,
+                                      output_device,
+                                      self.__db_callback,
+                                      finished_callback,
+                                      auto_play,
+                                      block_size=2048)
+        elif isinstance(self.analyser, VowelAnalyser):
+            self.analyser.sync_action(audio,
+                                      samplerate,
+                                      output_device,
+                                      self.__vowel_callback,
+                                      finished_callback,
+                                      auto_play,
+                                      block_size=4096)

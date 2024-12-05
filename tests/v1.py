@@ -164,35 +164,3 @@ with sd.OutputStream(samplerate=f.samplerate,
     stream.write(fs2)
 
 plt.pause(100000000000)
-
-# with sf.SoundFile('zh.wav') as f:
-#     print(f.channels, f.samplerate, f.frames)
-#     for i in range(1000000):
-#         data = f.read(2048, dtype=np.float32)
-#         if not len(data):
-#             break
-#         spectrogram_db = audio2db2(data)
-#         x.append(i)
-#         y.append(spectrogram_db)
-#         plt.plot(x, y)
-#         plt.pause(1)
-
-# p = pyaudio.PyAudio()
-#
-# stream = p.open(format=pyaudio.paFloat32,
-#                 channels=1,
-#                 rate=44100,
-#                 input=True,
-#                 frames_per_buffer=4096)
-#
-# for i in range(10000):
-#     # while True:
-#     data = stream.read(4096)
-#     audio_data = np.frombuffer(data, dtype=np.float32)
-#     audio_test(audio_data)
-#     # spectrogram_db = audio_test(audio_data)
-#
-#     # x.append(i)
-#     # y.append(spectrogram_db)
-#     # plt.plot(x, y)
-#     plt.pause(1)
