@@ -210,7 +210,7 @@ with VTSAdapter(DBAnalyser) as a:
 | `db_vts_mouth_param`    |          | `'MouthOpen'`   | 仅作用于`DBAnalyser`, VTS中控制mouth_input的参数, 如果不是默认值请自行修改.    |
 | `vowel_vts_mouth_param` |          | `dict[str,str]` | 仅作用于`VowelAnalyser`, VTS中控制mouth_input的参数, 如果不是默认值请自行修改. |
 | `ws_uri`                |          | `str`           | websocket uri 默认：ws://localhost:8001                     |
-| `plugin_info`           |          | `dict`          | 插件信息,可以自定义                                               |
+| `plugin_info`           |          | `VTSPluginInfo` | 插件信息,可以自定义                                               |
 
 `a.action()` 会开始处理音频数据. 以下是详细的参数说明:
 
