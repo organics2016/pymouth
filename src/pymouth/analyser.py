@@ -220,7 +220,7 @@ class VowelAnalyser(Analyser):
         #     log = log + " Max:O"
         # print(log)
 
-        # TODO 这里可以加一个激活函数过滤噪音 加入激活函数后会导致部分发音阈值过高，有待调整
+        # TODO 这里可能使用softmax进行归一处理更合适
         res = {
             'VoiceSilence': 1 if si_r == max else 0,
             'VoiceA': a_r + self.calibration['VoiceA'] if a_r == max else 0,
