@@ -1,3 +1,4 @@
+import traceback
 from abc import ABCMeta
 from concurrent.futures import ThreadPoolExecutor
 
@@ -27,16 +28,18 @@ class Analyser(metaclass=ABCMeta):
                        auto_play: bool = True,
                        dtype: np.dtype = np.float32,
                        block_size: int = 1024):
-
-        self.executor.submit(self.action_block,
-                             *(audio,
-                               samplerate,
-                               output_device,
-                               callback,
-                               finished_callback,
-                               auto_play,
-                               dtype,
-                               block_size))
+        try:
+            self.executor.submit(self.action_block,
+                                 *(audio,
+                                   samplerate,
+                                   output_device,
+                                   callback,
+                                   finished_callback,
+                                   auto_play,
+                                   dtype,
+                                   block_size)).result()
+        except Exception:
+            traceback.print_exc()
 
     def action_block(self,
                      audio: np.ndarray | str | sf.SoundFile,
@@ -63,7 +66,7 @@ class Analyser(metaclass=ABCMeta):
 
                 datas = split_list_by_n(audio, block_size)
                 for data in datas:
-                    self.play(callback, data, stream)
+                    self.play(callback, data, samplerate, stream)
 
             elif isinstance(audio, str):
                 with sf.SoundFile(audio) as f:
@@ -76,7 +79,7 @@ class Analyser(metaclass=ABCMeta):
                         data = f.read(block_size, dtype=dtype)
                         if not len(data):
                             break
-                        self.play(callback, data, stream)
+                        self.play(callback, data, samplerate, stream)
 
             elif isinstance(audio, sf.SoundFile):
                 stream = sd.OutputStream(samplerate=audio.samplerate,
@@ -89,7 +92,7 @@ class Analyser(metaclass=ABCMeta):
                     data = audio.read(block_size, dtype=dtype)
                     if not len(data):
                         break
-                    self.play(callback, data, stream)
+                    self.play(callback, data, samplerate, stream)
 
         finally:
             if stream is not None:
@@ -98,12 +101,12 @@ class Analyser(metaclass=ABCMeta):
             if finished_callback is not None:
                 finished_callback()
 
-    def play(self, callback, data: np.ndarray, stream: sd.OutputStream):
+    def play(self, callback, data: np.ndarray, samplerate: int | float, stream: sd.OutputStream):
         if stream is not None:
             stream.write(data)
-        callback(self.process(data), data)
+        callback(self.process(data, samplerate), data)
 
-    def process(self, data: np.ndarray):
+    def process(self, data: np.ndarray, samplerate: int | float):
         pass
 
 
@@ -111,13 +114,13 @@ class DBAnalyser(Analyser):
     def __init__(self):
         super().__init__()
 
-    def process(self, data: np.ndarray):
-        return self.__audio2db(data)
+    def process(self, data: np.ndarray, samplerate: int | float):
+        return self.__audio2db(data, samplerate)
 
-    def __audio2db(self, audio_data: np.ndarray) -> float:
+    def __audio2db(self, audio_data: np.ndarray, samplerate: int | float) -> float:
         audio_data = channel_conversion(audio_data)
         # 计算频谱
-        n_fft = 512 if audio_data.size >= 512 else audio_data.size
+        n_fft = get_n_fft(audio_data.size, samplerate)
         spectrum = librosa.stft(audio_data, n_fft=n_fft)
         # 将频谱转换为分贝
         spectrum_db = librosa.amplitude_to_db((np.abs(spectrum)))
@@ -165,15 +168,16 @@ class VowelAnalyser(Analyser):
             }
         self.calibration = calibration
 
-    def process(self, data: np.ndarray):
-        return self.__audio2vowel(data)
+    def process(self, data: np.ndarray, samplerate: int | float):
+        return self.__audio2vowel(data, samplerate)
 
-    def __audio2vowel(self, audio_data: np.ndarray) -> dict[str, float]:
+    def __audio2vowel(self, audio_data: np.ndarray, samplerate: int | float) -> dict[str, float]:
         audio_data = channel_conversion(audio_data)
 
         # TODO 这里可能要做人声滤波
         # 对线性声谱图应用mel滤波器后，取log，得到log梅尔声谱图，然后对log滤波能量（log梅尔声谱）做DCT离散余弦变换（傅里叶变换的一种），然后保留第2到第13个系数，得到的这12个系数就是MFCC
-        mfccs = librosa.feature.mfcc(y=audio_data, sr=22050, n_fft=512, dct_type=1, n_mfcc=3)[1:].T
+        n_fft = get_n_fft(audio_data.size, samplerate)
+        mfccs = librosa.feature.mfcc(y=audio_data, sr=samplerate, n_fft=n_fft, dct_type=1, n_mfcc=3)[1:].T
 
         # print(mfccs.shape)
         # 过短的音频会导致无法比较，直接按无声处理
@@ -205,21 +209,6 @@ class VowelAnalyser(Analyser):
 
         max = np.max([si_r, a_r, i_r, u_r, e_r, o_r])
 
-        # log = f"Silence:{si_r}, A:{a_r}, I:{i_r}, U:{u_r}, E:{e_r}, O:{o_r}"
-        # if si_r == max:
-        #     log = log + " Max:Silence"
-        # elif a_r == max:
-        #     log = log + " Max:A"
-        # elif i_r == max:
-        #     log = log + " Max:I"
-        # elif u_r == max:
-        #     log = log + " Max:U"
-        # elif e_r == max:
-        #     log = log + " Max:E"
-        # elif o_r == max:
-        #     log = log + " Max:O"
-        # print(log)
-
         # TODO 这里可能使用softmax进行归一处理更合适
         res = {
             'VoiceSilence': 1 if si_r == max else 0,
@@ -249,3 +238,21 @@ def split_list_by_n(list_collection, n):
     """
     for i in range(0, len(list_collection), n):
         yield list_collection[i: i + n]
+
+
+n_fft_ref_list = [128, 512, 1024, 2048, 4096]
+
+
+def get_n_fft(audio_block_size: int, sample_rate: int, milliseconds: int = 23) -> int:
+    """
+    计算FFT，计算给定时间和采样率内最适合的FFT。
+    一般认为每23毫秒左右为发音的一帧，对每一帧做 FFT（快速傅里叶变换），傅里叶变换的作用是把时域信号转为频域信号
+    :param audio_block_size:
+    :param sample_rate:
+    :param milliseconds:
+    :return:
+    """
+    n_fft = sample_rate * (milliseconds / 1000)
+    if n_fft > audio_block_size:
+        return audio_block_size
+    return min(n_fft_ref_list, key=lambda n_fft_ref: abs(n_fft_ref - n_fft))

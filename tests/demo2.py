@@ -6,7 +6,7 @@ from src.pymouth.analyser import VowelAnalyser
 
 def main():
     with VTSAdapter(VowelAnalyser) as a:
-        a.action(audio='light_the_sea.wav', samplerate=44100, output_device=2)
+        a.action(audio='light_the_sea.wav', samplerate=44100, output_device=3)
         time.sleep(100000)  # do something
 
 
