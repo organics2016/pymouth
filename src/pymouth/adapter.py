@@ -1,5 +1,3 @@
-from typing import Type
-
 import numpy as np
 import soundfile as sf
 
@@ -9,7 +7,7 @@ from .vts_websockets import VTSWebSocket, VTSPluginInfo, VTSParameterData
 
 class VTSAdapter:
     def __init__(self,
-                 analyser: Type[Analyser],
+                 analyser: Analyser,
                  db_vts_mouth_param: str = 'MouthOpen',
                  vowel_vts_mouth_param: dict[str, str] = None,
                  ws_uri: str = 'ws://localhost:8001',
@@ -48,7 +46,7 @@ class VTSAdapter:
                 'VoiceO': 'VoiceO'
             }
 
-        self.analyser = analyser()
+        self.analyser = analyser
 
         self.db_vts_mouth_param = db_vts_mouth_param
         self.vowel_vts_mouth_param = vowel_vts_mouth_param

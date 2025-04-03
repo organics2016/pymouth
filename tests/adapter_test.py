@@ -12,7 +12,7 @@ class AdapterAsyncTest(unittest.IsolatedAsyncioTestCase):
         self.finish = 0
 
     async def test_async_block_db(self):
-        with VTSAdapter(DBAnalyser) as a:
+        with VTSAdapter(DBAnalyser()) as a:
             a.action_block(audio='aiueo.wav', samplerate=44100, output_device=2)
             a.action_block(audio='aiueo.wav', samplerate=44100, output_device=2)
             print('test_async_block_db end')
@@ -21,7 +21,7 @@ class AdapterAsyncTest(unittest.IsolatedAsyncioTestCase):
         self.finish += 1
 
     async def test_async_noblock_db(self):
-        with VTSAdapter(DBAnalyser) as a:
+        with VTSAdapter(DBAnalyser()) as a:
             a.action(audio='aiueo.wav', samplerate=44100, output_device=2,
                      finished_callback=self.test_noblock_db_callback)
             a.action(audio='aiueo.wav', samplerate=44100, output_device=2,
@@ -38,7 +38,7 @@ class AdapterTest(unittest.TestCase):
         self.finish = 0
 
     def test_block_db(self):
-        with VTSAdapter(VowelAnalyser) as a:
+        with VTSAdapter(VowelAnalyser()) as a:
             a.action_block(audio='aiueo.wav', samplerate=44100, output_device=2)
             a.action_block(audio='aiueo.wav', samplerate=44100, output_device=2)
             print('test_block_db end')
@@ -48,7 +48,7 @@ class AdapterTest(unittest.TestCase):
         self.finish += 1
 
     def test_noblock_db(self):
-        with VTSAdapter(VowelAnalyser) as a:
+        with VTSAdapter(VowelAnalyser()) as a:
             a.action(audio='aiueo.wav', samplerate=44100, output_device=2,
                      finished_callback=self.test_noblock_db_callback)
             a.action(audio='aiueo.wav', samplerate=44100, output_device=2,
