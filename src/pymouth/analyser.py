@@ -227,6 +227,7 @@ class VowelAnalyser(Analyser):
                 'VoiceO': 0,
             }
 
+        # 通过DTW(动态时间规整算法) 计算 当前帧窗与元音帧窗的距离，值越小越相似
         si = dtw(self.V_Silence, mfccs, distance_only=True).normalizedDistance
         a = dtw(self.V_A, mfccs, distance_only=True).normalizedDistance
         i = dtw(self.V_I, mfccs, distance_only=True).normalizedDistance
@@ -236,7 +237,7 @@ class VowelAnalyser(Analyser):
 
         # log = f"Silence:{si:f}, A:{a:f}, I:{i:f}, U:{u:f}, E:{e:f}, O:{o:f}"
         # print(log)
-
+        # 对距离取负，值越大越相似，再对相似度进行softmax，取相似度的概率分布。这里 temperature 取大值降低置信度，可以使输出元音的整体概率更平滑，口型更加真实。
         r = np.array([-1 * i for i in [si, a, i, u, e, o]])
         r = softmax(r, temperature=self.temperature).tolist()
         # print([f"{t:f}" for t in r])
