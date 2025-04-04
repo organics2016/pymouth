@@ -27,7 +27,7 @@ def softmax_with_temperature(x, temperature=1.0):
 # 示例使用
 if __name__ == "__main__":
     # 示例1: 不同温度下的结果比较
-    scores = np.array([1.0, 2.0, 3.0])
+    scores = np.array([-1.0, 0, 1.0])
 
     print("高温(tau=2.0):", softmax_with_temperature(scores, temperature=2.0))
     print("标准(tau=1.0):", softmax_with_temperature(scores, temperature=1.0))

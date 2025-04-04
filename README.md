@@ -40,7 +40,7 @@ pip install pymouth
 3. 下面是两种基于不同方式的Demo.<br>
    你可以找一个音频文件替换`some.wav`.<br>
    `samplerate`:音频数据的采样率.<br>
-   `output_device`:输出设备Index.
+   `output_device`:输出设备Index. 这里很重要，如果不告诉插件播放设备是哪个，那么插件不会正常工作。
    可以参考[audio_devices_utils.py](https://github.com/organics2016/pymouth/blob/master/src/pymouth/audio_devices_utils.py)<br>
     - `基于分贝的口型同步`
        ```python
@@ -48,7 +48,7 @@ pip install pymouth
        from pymouth import VTSAdapter, DBAnalyser
     
        def main():
-         with VTSAdapter(DBAnalyser) as a:
+         with VTSAdapter(DBAnalyser()) as a:
              a.action(audio='some.wav', samplerate=44100, output_device=2)
              time.sleep(100000)  # do something
     
@@ -63,7 +63,7 @@ pip install pymouth
        from pymouth import VTSAdapter, VowelAnalyser
     
        def main():
-         with VTSAdapter(VowelAnalyser) as a:
+         with VTSAdapter(VowelAnalyser()) as a:
              a.action(audio='some.wav', samplerate=44100, output_device=2)
              time.sleep(100000)  # do something
     
@@ -77,6 +77,24 @@ pip install pymouth
 
 ## API变化
 
+1.3.0版本之后，分析器的对象由用户创建, VowelAnalyser 元音分析仪支持 temperature 参数，这个参数用来控制各个元音的置信度，值越大置信度越低，口型越平滑，反之亦然。temperature 不能为 0<br>
+1.3.0对两种 Analyser 进行了算法改进，使口型同步的效果更好。
+
+   ```python
+   import asyncio
+   from pymouth import VTSAdapter, VowelAnalyser
+   
+   
+   async def main():
+       # with VTSAdapter(VowelAnalyser) as a: # 不能再用这种方式创建 Analyser
+       with VTSAdapter(VowelAnalyser()) as a: # 需要由用户new出这个对象，temperature 默认为10,可以不填
+           a.action(audio='aiueo.wav', samplerate=44100, output_device=2)  # no-block
+           await asyncio.sleep(100000)
+   
+   if __name__ == "__main__":
+       asyncio.run(main())
+   ```
+
 1.2.0版本之后，移除了所有函数的协程调用方式(async/await)，协程调用具有传染性，不利于用户维护。<br>
 目前只提供阻塞与非阻塞调用方式，非阻塞方式由内部线程池单线程实现，即无论`a.action`
 被调用多少次，都会按照调用的现后顺序播放音频。<br>
@@ -88,7 +106,7 @@ pip install pymouth
    
    
    async def main():
-       with VTSAdapter(VowelAnalyser) as a:
+       with VTSAdapter(VowelAnalyser()) as a:
            a.action(audio='aiueo.wav', samplerate=44100, output_device=2)  # no-block
            # a.action_block(audio='aiueo.wav', samplerate=44100, output_device=2) # block
            await asyncio.sleep(100000)
@@ -128,7 +146,7 @@ class Speaker:
                                     authentication_token_path='./pymouth_vts_token.txt',
                                     plugin_icon=None)
 
-        with VTSAdapter(DBAnalyser, plugin_info=plugin_info) as a:
+        with VTSAdapter(DBAnalyser(), plugin_info=plugin_info) as a:
             while True:
                 msg: SpeakMsg = self.queue.get()
                 t0 = time.time()
@@ -160,7 +178,7 @@ if __name__ == "__main__":
 关键的代码只有两行:
 
 ```python
-with VTSAdapter(DBAnalyser) as a:
+with VTSAdapter(DBAnalyser()) as a:
     a.action(audio='some.wav', samplerate=44100, output_device=2)  # no-block
     # a.action_block(audio='aiueo.wav', samplerate=44100, output_device=2) # block
 ```
