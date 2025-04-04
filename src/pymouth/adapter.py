@@ -92,7 +92,7 @@ class VTSAdapter:
                                          self.__db_callback,
                                          finished_callback,
                                          auto_play,
-                                         block_size=2048)
+                                         block_size=4096)
         elif isinstance(self.analyser, VowelAnalyser):
             self.analyser.action_noblock(audio,
                                          samplerate,
@@ -116,7 +116,7 @@ class VTSAdapter:
                                        self.__db_callback,
                                        finished_callback,
                                        auto_play,
-                                       block_size=2048)
+                                       block_size=4096)
         elif isinstance(self.analyser, VowelAnalyser):
             self.analyser.action_block(audio,
                                        samplerate,

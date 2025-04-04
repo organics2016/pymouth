@@ -10,8 +10,64 @@ from dtw import dtw
 
 
 class Analyser(metaclass=ABCMeta):
-    def __init__(self):
+    V_A = [[157.28203, -18.084631],
+           [184.55794, -70.21922],
+           [180.11708, -69.37925],
+           [186.3136, -68.28505],
+           [184.01038, -62.837513],
+           [181.70918, -56.22454],
+           [183.93184, -55.787033],
+           [177.58957, -55.56417],
+           [210.36815, -42.245583]]
+    V_I = [[154.23402, - 66.638794],
+           [109.41006, -76.42681],
+           [104.646484, -79.092224],
+           [100.69435, -73.16504],
+           [106.442406, -68.50664],
+           [104.717026, -67.13239],
+           [98.70581, -67.052155],
+           [90.54036, -64.939255],
+           [96.68744, -4.7852263]]
+    V_U = [[177.38, -21.598547],
+           [163.56247, -60.48896],
+           [162.29306, -65.40919],
+           [147.10324, -77.276535],
+           [145.81586, -81.49585],
+           [141.00285, -80.76966],
+           [137.3823, -83.69654],
+           [125.162674, -86.36088],
+           [182.829, -57.803486]]
+    V_E = [[45.139225, -3.552611],
+           [82.19922, -65.22143],
+           [154.64558, -90.886116],
+           [153.86205, -97.447235],
+           [158.62253, -77.25729],
+           [155.23709, -56.107735],
+           [149.8651, -64.127594],
+           [145.0244, -55.381966],
+           [175.49411, -33.858017]]
+    V_O = [[224.24329, -10.556553],
+           [193.64792, -22.315527],
+           [186.96034, -20.628428],
+           [184.96133, -16.40874],
+           [186.04208, -22.023905],
+           [185.25256, -11.928689],
+           [185.24428, -5.041305],
+           [181.70624, -3.2469425],
+           [131.43114, 3.3550904]]
+    V_Silence = [[52.750603, -4.9177713],
+                 [84.026146, 21.443743],
+                 [77.42841, 2.3937027],
+                 [85.50844, 21.711079],
+                 [80.75325, 7.308112],
+                 [82.622925, 16.251738],
+                 [69.67996, 10.19037],
+                 [80.5309, 6.884417],
+                 [71.37026, 22.482405]]
+
+    def __init__(self, temperature: float = 10.0):
         self.executor = ThreadPoolExecutor(1)
+        self.temperature = temperature
 
     def __enter__(self):
         return self
@@ -27,7 +83,7 @@ class Analyser(metaclass=ABCMeta):
                        finished_callback=None,
                        auto_play: bool = True,
                        dtype: np.dtype = np.float32,
-                       block_size: int = 1024):
+                       block_size: int = 4096):
 
         self.executor.submit(self.action_block,
                              *(audio,
@@ -47,7 +103,7 @@ class Analyser(metaclass=ABCMeta):
                      finished_callback=None,
                      auto_play: bool = True,
                      dtype: np.dtype = np.float32,
-                     block_size: int = 1024):
+                     block_size: int = 4096):
 
         stream = None
         try:
@@ -109,107 +165,7 @@ class Analyser(metaclass=ABCMeta):
     def process(self, data: np.ndarray, samplerate: int | float):
         pass
 
-
-class DBAnalyser(Analyser):
-    def __init__(self):
-        super().__init__()
-
-    def process(self, data: np.ndarray, samplerate: int | float):
-        return self.__audio2db(data, samplerate)
-
-    def __audio2db(self, audio_data: np.ndarray, samplerate: int | float) -> float:
-        audio_data = channel_conversion(audio_data)
-        # 计算频谱
-        n_fft = get_n_fft(audio_data.size, samplerate)
-        spectrum = librosa.stft(audio_data, n_fft=n_fft)
-        # 将频谱转换为分贝
-        spectrum_db = librosa.amplitude_to_db((np.abs(spectrum)))
-        # 采样
-        # spectrum_db = spectrum_db[0:len(audio_data):100]
-
-        # 采样出nan值统一为 最小分贝
-        # spectrum_db = np.nan_to_num(spectrum_db, nan=-100.0)
-
-        # 标准化
-        mean = spectrum_db.mean()
-        std = spectrum_db.std()
-        # print(f"mean: {mean}, std: {std}")
-        if mean == 0 or std == 0:
-            return 0
-
-        # y = (std-min)/(max-min) 这里假设: 最小标准差为0,最大标准差是分贝平均值的绝对值, 然后对标准差y进行min-max标准化
-        y = float(std / np.abs(mean))
-        # print(y)
-        # 有标准差大于平均值的情况,
-        if y > 1:
-            return 1.0
-        return y
-
-
-class VowelAnalyser(Analyser):
-    V_A = [[157.28203, -18.084631],
-           [184.55794, -70.21922],
-           [180.11708, -69.37925],
-           [186.3136, -68.28505],
-           [184.01038, -62.837513],
-           [181.70918, -56.22454],
-           [183.93184, -55.787033],
-           [177.58957, -55.56417],
-           [210.36815, -42.245583]]
-    V_I = [[154.23402, - 66.638794],
-           [109.41006, -76.42681],
-           [104.646484, -79.092224],
-           [100.69435, -73.16504],
-           [106.442406, -68.50664],
-           [104.717026, -67.13239],
-           [98.70581, -67.052155],
-           [90.54036, -64.939255],
-           [96.68744, -4.7852263]]
-    V_U = [[177.38, -21.598547],
-           [163.56247, -60.48896],
-           [162.29306, -65.40919],
-           [147.10324, -77.276535],
-           [145.81586, -81.49585],
-           [141.00285, -80.76966],
-           [137.3823, -83.69654],
-           [125.162674, -86.36088],
-           [182.829, -57.803486]]
-    V_E = [[45.139225, -3.552611],
-           [82.19922, -65.22143],
-           [154.64558, -90.886116],
-           [153.86205, -97.447235],
-           [158.62253, -77.25729],
-           [155.23709, -56.107735],
-           [149.8651, -64.127594],
-           [145.0244, -55.381966],
-           [175.49411, -33.858017]]
-    V_O = [[224.24329, -10.556553],
-           [193.64792, -22.315527],
-           [186.96034, -20.628428],
-           [184.96133, -16.40874],
-           [186.04208, -22.023905],
-           [185.25256, -11.928689],
-           [185.24428, -5.041305],
-           [181.70624, -3.2469425],
-           [131.43114, 3.3550904]]
-    V_Silence = [[52.750603, -4.9177713],
-                 [84.026146, 21.443743],
-                 [77.42841, 2.3937027],
-                 [85.50844, 21.711079],
-                 [80.75325, 7.308112],
-                 [82.622925, 16.251738],
-                 [69.67996, 10.19037],
-                 [80.5309, 6.884417],
-                 [71.37026, 22.482405]]
-
-    def __init__(self, temperature: float = 10):
-        super().__init__()
-        self.temperature = temperature
-
-    def process(self, data: np.ndarray, samplerate: int | float):
-        return self.__audio2vowel(data, samplerate)
-
-    def __audio2vowel(self, audio_data: np.ndarray, samplerate: int | float) -> dict[str, float]:
+    def _audio2vowel(self, audio_data: np.ndarray, samplerate: int | float) -> dict[str, float]:
         audio_data = channel_conversion(audio_data)
 
         # TODO 这里可能要做人声滤波 , 人声分离比较复杂且耗费性能，暂时不提供支持
@@ -254,6 +210,28 @@ class VowelAnalyser(Analyser):
         return res
 
 
+class DBAnalyser(Analyser):
+    def __init__(self, temperature: float = 10.0):
+        super().__init__(temperature=temperature)
+
+    def process(self, data: np.ndarray, samplerate: int | float):
+        return self._audio2db(data, samplerate)
+
+    def _audio2db(self, audio_data: np.ndarray, samplerate: int | float) -> float:
+        res = self._audio2vowel(audio_data, samplerate)
+        vs = res['VoiceSilence']
+        max = np.max([res[k] for k in res.keys()])
+        return max if max != vs else 0
+
+
+class VowelAnalyser(Analyser):
+    def __init__(self, temperature: float = 10.0):
+        super().__init__(temperature=temperature)
+
+    def process(self, data: np.ndarray, samplerate: int | float):
+        return self._audio2vowel(data, samplerate)
+
+
 def channel_conversion(audio: np.ndarray):
     # 如果音频数据为立体声，则将其转换为单声道
     if audio.ndim == 2 and audio.shape[1] == 2:
@@ -290,7 +268,7 @@ def get_n_fft(audio_block_size: int, sample_rate: int, milliseconds: int = 23) -
     return min(n_fft_ref_list, key=lambda n_fft_ref: abs(n_fft_ref - n_fft))
 
 
-def softmax(x: np.ndarray, temperature: float = 1) -> np.ndarray:
+def softmax(x: np.ndarray, temperature: float = 1.0) -> np.ndarray:
     """
     带温度参数的softmax函数
     temperature > 1：使分布更平滑（降低置信度）

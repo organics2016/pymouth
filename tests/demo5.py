@@ -19,7 +19,7 @@ def callback(md: dict[str, float], data):
 
 
 with VowelAnalyser() as a:
-    a.action_noblock('zh.wav', 44100, output_device=2, callback=callback)
+    a.action_noblock('zh.wav', 44100, output_device=3, callback=callback)
     # a.sync_action()
     print("end")
     time.sleep(1000000)
