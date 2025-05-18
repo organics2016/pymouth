@@ -10,7 +10,7 @@
 [Demo video](https://www.bilibili.com/video/BV1nKGoeJEQY/?vd_source=49279a5158cf4b9566102c7e3806c231)<br>
 - 以Python API的形式提供能力，用作和其他项目的集成，这有助于系统集成，而不是单独为音频播放和口型同步能力启动新的进程而占用宝贵的计算资源。
 - 采用动态时间规划算法(DTW)匹配音频中的元音，并以元音置信度的方式输出，而不是使用AI模型，即使是移动端CPU也绰绰有余。
-- VTubeStudio对`pymouth`来说只是可选项，只是一个Adapter，你可以使用Low Level API和你想要皮套引擎结合，只使用音频播放和音频分析能力。
+- VTubeStudio对`pymouth`来说只是可选项，只是一个Adapter，你可以使用[Low Level API](#low-level)和你想要皮套引擎结合，只使用音频播放和音频分析能力。
 
 
 ## Quick Start
