@@ -1,6 +1,7 @@
-librosa~=0.10.2.post1
+librosa~=0.11.0
 sounddevice~=0.4.7
 soundfile~=0.12.1
-numpy~=1.26.4
-websockets~=14.1
-dtw-python~=1.5.1
+numpy~=2.0.2
+websockets~=15.0.1
+dtw-python~=1.5.3
+PyAudio~=0.2.14
