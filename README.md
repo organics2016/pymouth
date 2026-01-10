@@ -5,14 +5,17 @@
 
 # pymouth
 
-`pymouth` 是基于Python的Live2D口型同步库. 你可以用音频文件, 甚至是AI模型输出的ndarray, 就能轻松的让你的Live2D形象开口.<br>
+`pymouth` 是基于Python的Live2D口型同步库. 你可以用音频文件, 甚至是AI模型输出的ndarray,
+就能轻松的让你的Live2D形象开口.<br>
 效果演示视频.
 [Demo video](https://www.bilibili.com/video/BV1nKGoeJEQY/?vd_source=49279a5158cf4b9566102c7e3806c231)<br>
+
 - 以Python API的形式提供能力，用作和其他项目的集成，把宝贵的计算资源留给皮套的大脑，而不是给音频捕获软件和虚拟声卡。
 - 采用动态时间规划算法(DTW)匹配音频中的元音，并以元音置信度(softmax)的方式输出，而不是使用AI模型，即使是移动端CPU也绰绰有余。
 - VTubeStudio对`pymouth`来说只是可选项，只是一个Adapter，你可以使用[Low Level API](#low-level)和你想要皮套引擎结合，只使用音频播放和音频分析能力。
 
 - 1.3.0版本之后API已固定，请以本文档为准。
+
 ## Quick Start
 
 ### Environment
@@ -108,7 +111,7 @@ class Speaker:
                                     authentication_token_path='./pymouth_vts_token.txt',
                                     plugin_icon=None)
 
-        with VTSAdapter(DBAnalyser(), plugin_info=plugin_info) as a:
+        with VTSAdapter(DBAnalyser(temperature=10), plugin_info=plugin_info) as a:
             while True:
                 msg: SpeakMsg = self.queue.get()
                 t0 = time.time()
@@ -140,11 +143,14 @@ if __name__ == "__main__":
 关键的代码只有两行:
 
 ```python
-with VTSAdapter(DBAnalyser()) as a:
+with VTSAdapter(DBAnalyser(temperature=10)) as a:
     a.action(audio='some.wav', samplerate=44100, output_device=2)  # no-block
     # a.action_block(audio='aiueo.wav', samplerate=44100, output_device=2) # block
 ```
 
+`temperature=10`温度(softmax)
+，有别于LLM中对下一个token的概率分布，这里的温度指的是：音频的每个窗帧FFT，与元音相似度的概率分布。值越大，概率越平均，口型会变得平滑。反之亦然。默认为10，不可
+`<=0`，可以随意调整这个值观察同步效果，并确定理想值。<br>
 `a.action()`非阻塞，会立即返回，由程序内部维护线程池和队列。<br>
 `a.action_block()`阻塞，直到音频播放和处理完毕才会返回，纯同步代码无线程，线程由调用者维护。<br>
 
