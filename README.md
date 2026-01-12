@@ -3,6 +3,8 @@
 [![PyPI - Version](https://img.shields.io/pypi/v/pymouth?color=green)](https://pypi.org/project/pymouth/)
 [![PyPI Downloads](https://static.pepy.tech/badge/pymouth)](https://pepy.tech/projects/pymouth)
 
+### [English](./README-en.md) | [中文](./README.md)
+
 # pymouth
 
 `pymouth` 是基于Python的Live2D口型同步库. 你可以用音频文件, 甚至是AI模型输出的ndarray,

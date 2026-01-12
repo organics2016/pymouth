@@ -3,6 +3,8 @@
 [![PyPI - Version](https://img.shields.io/pypi/v/pymouth?color=green)](https://pypi.org/project/pymouth/)
 [![PyPI Downloads](https://static.pepy.tech/badge/pymouth)](https://pepy.tech/projects/pymouth)
 
+### [English](./README-en.md) | [中文](./README.md)
+
 # pymouth
 
 `pymouth` is a Python-based Live2D lip-sync library. You can easily make your Live2D avatar open its mouth using audio files or even ndarrays output by AI models.<br>
