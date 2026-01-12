@@ -1,0 +1,23 @@
+name: Markdown Translator and Reviewer Workflow
+
+on:
+  # Execute when a comment is created in a file of a pull request
+  pull_request_review_comment:
+    types: [ created ]
+
+jobs:
+  md-translator-reviewer:
+    runs-on: ubuntu-latest
+    name: A job to run the Markdown Reviwer and Translator
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run Markdown Translator and Reviewer
+        # Only run the action when the comment contains the command '/mtr-'
+        if: |
+          contains(github.event.comment.body, '/mtr-')
+        uses: trystan2k/md-translator-reviewer@v1.2.0
+        with:
+          aiApiKey: ${{ secrets.AI_API_KEY }}
+          aiProvider: 'google' # current available providers: google, vercel-ai-google, vercel-ai-openai
+          aiModel: 'gemini-3-flash-preview'
