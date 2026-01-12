@@ -227,7 +227,6 @@ with VowelAnalyser() as a:
 
 ## TODO
 
-- 文档补全
 - Test case
 
 ## Special Thanks
