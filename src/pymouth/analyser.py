@@ -81,6 +81,7 @@ class Analyser(metaclass=ABCMeta):
                        output_device: int,
                        callback,
                        finished_callback=None,
+                       interrupt_listening=None,
                        auto_play: bool = True,
                        dtype: np.dtype = np.float32,
                        block_size: int = 4096):
@@ -91,6 +92,7 @@ class Analyser(metaclass=ABCMeta):
                                output_device,
                                callback,
                                finished_callback,
+                               interrupt_listening,
                                auto_play,
                                dtype,
                                block_size))
@@ -101,6 +103,7 @@ class Analyser(metaclass=ABCMeta):
                      output_device: int,
                      callback,
                      finished_callback=None,
+                     interrupt_listening=None,
                      auto_play: bool = True,
                      dtype: np.dtype = np.float32,
                      block_size: int = 4096):
@@ -120,6 +123,8 @@ class Analyser(metaclass=ABCMeta):
 
                 datas = split_list_by_n(audio, block_size)
                 for data in datas:
+                    if interrupt_listening is not None and interrupt_listening():
+                        break
                     self.play(callback, data, samplerate, stream)
 
             elif isinstance(audio, str):
@@ -130,6 +135,8 @@ class Analyser(metaclass=ABCMeta):
                                              channels=f.channels,
                                              dtype=dtype).__enter__() if auto_play else None
                     while True:
+                        if interrupt_listening is not None and interrupt_listening():
+                            break
                         data = f.read(block_size, dtype=dtype)
                         if not len(data):
                             break
@@ -143,6 +150,8 @@ class Analyser(metaclass=ABCMeta):
                                          dtype=dtype).__enter__() if auto_play else None
 
                 while True:
+                    if interrupt_listening is not None and interrupt_listening():
+                        break
                     data = audio.read(block_size, dtype=dtype)
                     if not len(data):
                         break

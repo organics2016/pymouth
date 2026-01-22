@@ -74,6 +74,7 @@ class VTSAdapter:
                samplerate: int | float,
                output_device: int,
                finished_callback=None,
+               interrupt_listening=None,
                auto_play: bool = True):
 
         """
@@ -91,6 +92,7 @@ class VTSAdapter:
                                          output_device,
                                          self.__db_callback,
                                          finished_callback,
+                                         interrupt_listening,
                                          auto_play,
                                          block_size=4096)
         elif isinstance(self.analyser, VowelAnalyser):
@@ -99,6 +101,7 @@ class VTSAdapter:
                                          output_device,
                                          self.__vowel_callback,
                                          finished_callback,
+                                         interrupt_listening,
                                          auto_play,
                                          block_size=4096)
 
@@ -107,6 +110,7 @@ class VTSAdapter:
                      samplerate: int | float,
                      output_device: int,
                      finished_callback=None,
+                     interrupt_listening=None,
                      auto_play: bool = True):
 
         if isinstance(self.analyser, DBAnalyser):
@@ -115,6 +119,7 @@ class VTSAdapter:
                                        output_device,
                                        self.__db_callback,
                                        finished_callback,
+                                       interrupt_listening,
                                        auto_play,
                                        block_size=4096)
         elif isinstance(self.analyser, VowelAnalyser):
@@ -123,5 +128,6 @@ class VTSAdapter:
                                        output_device,
                                        self.__vowel_callback,
                                        finished_callback,
+                                       interrupt_listening,
                                        auto_play,
                                        block_size=4096)

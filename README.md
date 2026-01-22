@@ -16,7 +16,9 @@
 - 采用动态时间规划算法(DTW)匹配音频中的元音，并以元音置信度(softmax)的方式输出，而不是使用AI模型，即使是移动端CPU也绰绰有余。
 - VTubeStudio对`pymouth`来说只是可选项，只是一个Adapter，你可以使用[Low Level API](#low-level)和你想要皮套引擎结合，只使用音频播放和音频分析能力。
 
-- 1.3.0版本之后API已固定，请以本文档为准。
+## Update
+
+- 1.3.2 新增[播放时打断](#interruption-during-playback)功能
 
 ## Quick Start
 
@@ -225,6 +227,50 @@ with VowelAnalyser() as a:
     # a.action_block() # block
     print("end")
     time.sleep(1000000)
+```
+
+### Interruption During Playback
+
+TTS的音频有时会很长，用户需要一个中断信号让Agent闭嘴。为此添加了一个 `interrupt_listening` 参数。<br>
+这个参数接收一个函数，这个参数的返回值必须是`bool`。<br>
+插件会在每处理一个`block_size`时检查这个函数的返回值，如果返回`True`，异步线程会立刻结束(`a.action_noblock()`)
+，或同步函数立刻返回(`a.action_block()`)。
+
+```python
+import threading
+import time
+
+from pymouth import VowelAnalyser
+
+
+class Demo:
+    def __init__(self):
+        self.interrupt = False
+
+    def __callback(self, md: dict[str, float], data):
+        pass
+
+    def __listening(self) -> bool:
+        # Time-consuming operations are not recommended here.
+        return self.interrupt
+
+    def interrupt_handler(self):
+        time.sleep(5)  # do something
+        print("interrupt")
+        self.interrupt = True
+
+    def boot(self):
+        threading.Thread(target=self.interrupt_handler).start()
+
+        with VowelAnalyser() as a:
+            a.action_block('zh.wav', 44100,
+                           output_device=3,
+                           callback=self.__callback,
+                           interrupt_listening=self.__listening)
+            print("end")
+
+
+Demo().boot()
 ```
 
 ## TODO
