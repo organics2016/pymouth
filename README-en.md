@@ -7,15 +7,16 @@
 
 # pymouth
 
-`pymouth` is a Python-based Live2D lip-sync library. You can easily make your Live2D avatar open its mouth using audio files or even ndarrays output by AI models.<br>
-Demo video.
-[Demo video](https://www.bilibili.com/video/BV1nKGoeJEQY/?vd_source=49279a5158cf4b9566102c7e3806c231)<br>
+`pymouth` is a Python-based Live2D lip-sync library. You can easily make your Live2D avatar speak using audio files or even ndarray output from AI models.<br>
+Demo video: [Demo video](https://www.bilibili.com/video/BV1nKGoeJEQY/?vd_source=49279a5158cf4b9566102c7e3806c231)<br>
 
 - Provides capabilities in the form of a Python API for integration with other projects, leaving valuable computing resources for the avatar's "brain" rather than for audio capture software and virtual sound cards.
-- Uses the Dynamic Time Warping (DTW) algorithm to match vowels in audio and outputs them via vowel confidence (softmax), rather than using AI models. Even mobile CPUs are more than sufficient.
-- VTubeStudio is merely an optional Adapter for `pymouth`. You can use the [Low Level API](#low-level) to integrate with your desired avatar engine, using only the audio playback and analysis capabilities.
+- Uses a Dynamic Time Warping (DTW) algorithm to match vowels in audio and outputs them as vowel confidence (softmax), rather than using AI models; even mobile CPUs are more than sufficient.
+- VTubeStudio is optional for `pymouth`, acting only as an Adapter. You can use the [Low Level API](#low-level) to integrate with your desired avatar engine, using only the audio playback and analysis capabilities.
 
-- The API has been fixed since version 1.3.0; please refer to this documentation.
+## Update
+
+- 1.3.2 Added [Interruption During Playback](#interruption-during-playback) feature.
 
 ## Quick Start
 
@@ -35,19 +36,19 @@ pip install pymouth
 1. Before starting, you need to turn on the Server switch in `VTubeStudio`. The port is usually 8001 by default.<br>
    ![server_start.png](https://github.com/organics2016/pymouth/blob/master/screenshot/server_start.png)
 2. You need to determine the supported parameters for your Live2D lip-sync.<br>
-   Please note: A simple judgment method is provided below, but this method will modify (reset) some lip-sync parameters of the Live2D model. Please back up your model before use.<br>
-   If you know your model inside out, you can skip this step.<br>
+   Please note: A simple judgment method is provided below, but this method will modify (reset) some Live2D model lip-sync parameters. Please back up your model before use.<br>
+   If you know your model well, you can skip this step.<br>
    ![setup.png](https://github.com/organics2016/pymouth/blob/master/screenshot/setup.png)
-    - After confirming the parameter reset, if the following information appears, it means your model only supports `Decibel-based lip-sync`.
+    - After confirming the reset parameters, if the following information appears, it means your model only supports `Decibel-based lip-sync`.
       ![db.png](https://github.com/organics2016/pymouth/blob/master/screenshot/db.png)
-    - After confirming the parameter reset, if the following information appears, it means your model only supports `Vowel-based lip-sync`.
+    - After confirming the reset parameters, if the following information appears, it means your model only supports `Vowel-based lip-sync`.
       ![vowel.png](https://github.com/organics2016/pymouth/blob/master/screenshot/vowel.png)
-    - If VTubeStudio finds all parameters and resets them successfully, it means both methods are supported. You only need to choose one method in the subsequent code.
+    - If VTubeStudio finds all parameters and resets successfully, it means both methods are supported. You only need to choose one method in the following code.
 
 3. Below are two demos based on different methods.<br>
    You can find an audio file to replace `some.wav`.<br>
-   `samplerate`: The sampling rate of the audio data.<br>
-   `output_device`: Output device Index. This is very important; if you don't tell the plugin which playback device to use, the plugin will not work properly.
+   `samplerate`: The sample rate of the audio data.<br>
+   `output_device`: Output device Index. This is very important; if the plugin is not told which playback device to use, it will not work properly.
    You can refer to [audio_devices_utils.py](https://github.com/organics2016/pymouth/blob/master/src/pymouth/audio_devices_utils.py)<br>
     - `Decibel-based lip-sync`
        ```python
@@ -84,7 +85,7 @@ pip install pymouth
 
 ## About AI
 
-Below is a relatively complete example of using pymouth as an AI TTS consumer.
+Below is a more complete example of using pymouth as an AI TTS consumer.
 
 ```python
 import queue
@@ -133,7 +134,7 @@ class Speaker:
 
 if __name__ == "__main__":
     speakers = Speaker()
-    # 这里的实现只作为参考而不是建议。对于AI等CPU密集型场景，使用线程而不是协程可能会更好。
+    # This implementation is for reference only and not a recommendation. For CPU-intensive scenarios like AI, using threads instead of coroutines might be better.
     threading.Thread(target=speakers.start).start()
 ```
 
@@ -149,34 +150,33 @@ with VTSAdapter(DBAnalyser(temperature=10)) as a:
     # a.action_block(audio='aiueo.wav', samplerate=44100, output_device=2) # block
 ```
 
-`temperature=10` Temperature (softmax).
-Unlike the probability distribution for the next token in LLMs, the temperature here refers to the probability distribution of the similarity between each window frame FFT of the audio and the vowels. The larger the value, the more averaged the probability, and the mouth movement will become smoother. Vice versa. The default is 10, it cannot be `<=0`. You can adjust this value freely to observe the synchronization effect and determine the ideal value.<br>
-`a.action()` is non-blocking and will return immediately, with the thread pool and queue maintained internally by the program.<br>
-`a.action_block()` is blocking and will not return until the audio playback and processing are completed. It is pure synchronous code without internal threads; threads are maintained by the caller.<br>
+`temperature=10` (softmax), different from the probability distribution of the next token in LLM, the temperature here refers to: the probability distribution of vowel similarity for each FFT window frame of the audio. The larger the value, the more averaged the probability, and the mouth movement will become smoother. Vice versa. The default is 10, cannot be `<=0`. You can adjust this value freely to observe the synchronization effect and determine the ideal value.<br>
+`a.action()` is non-blocking and returns immediately, with the thread pool and queue maintained internally by the program.<br>
+`a.action_block()` is blocking and will not return until audio playback and processing are complete. Pure synchronous code without threads; threads are maintained by the caller.<br>
 
-`VTSAdapter` detailed parameter descriptions:
+`VTSAdapter` detailed parameter description:
 
 | param                   | required | default         | describe                                                 |
 |:------------------------|:---------|:----------------|:---------------------------------------------------------|
-| `analyser`              | Y        |                 | Analyser, must be a subclass of Analyser. Currently supports `DBAnalyser` and `VowelAnalyser`. |
-| `db_vts_mouth_param`    |          | `'MouthOpen'`   | Only applies to `DBAnalyser`. The parameter in VTS that controls mouth_input. Please modify if it is not the default value. |
-| `vowel_vts_mouth_param` |          | `dict[str,str]` | Only applies to `VowelAnalyser`. The parameter in VTS that controls mouth_input. Please modify if it is not the default value. |
-| `ws_uri`                |          | `str`           | websocket uri. Default: ws://localhost:8001                     |
-| `plugin_info`           |          | `VTSPluginInfo` | Plugin information, can be customized.                                               |
+| `analyser`              | Y        |                 | Analyser, must be a subclass of Analyser, currently supports `DBAnalyser` and `VowelAnalyser`    |
+| `db_vts_mouth_param`    |          | `'MouthOpen'`   | Only affects `DBAnalyser`, the parameter controlling mouth_input in VTS. Modify if not default.    |
+| `vowel_vts_mouth_param` |          | `dict[str,str]` | Only affects `VowelAnalyser`, the parameter controlling mouth_input in VTS. Modify if not default. |
+| `ws_uri`                |          | `str`           | websocket uri default: ws://localhost:8001                     |
+| `plugin_info`           |          | `VTSPluginInfo` | Plugin information, can be customized                                               |
 
-`a.action()` will start processing audio data. Detailed parameter descriptions:
+`a.action()` will start processing audio data. Detailed parameter description:
 
 | param               | required | default | describe                                                        |
 |:--------------------|:---------|:--------|:----------------------------------------------------------------|
-| `audio`             | Y        |         | Audio data. Can be a file path, a SoundFile object, or an ndarray.                    |
-| `samplerate`        | Y        |         | Sampling rate. This depends on the sampling rate of the audio data. If you cannot obtain it, you can try the sampling rate of the output device. |
-| `output_device`     | Y        |         | Output device Index. This depends on hardware or virtual devices. Use audio_devices_utils.py to print current system audio device information. |
-| `finished_callback` |          | `None`  | This method will be called back when audio processing is completed.                                                  |
-| `auto_play`         |          | `True`  | Whether to play audio automatically. Default is True, which plays audio (automatically writes audio to the specified `output_device`). |
+| `audio`             | Y        |         | Audio data, can be a file path, a SoundFile object, or an ndarray                    |
+| `samplerate`        | Y        |         | Sample rate, depends on the audio data sample rate. If unavailable, try the output device's sample rate.              |
+| `output_device`     | Y        |         | Output device Index, depends on hardware or virtual devices. Use audio_devices_utils.py to print system audio info. |
+| `finished_callback` |          | `None`  | Callback method when audio processing is finished.                                                  |
+| `auto_play`         |          | `True`  | Whether to play audio automatically, default is True (automatically writes audio to specified `output_device`)             |
 
 ### Low Level
 
-Get Started demonstrates a High Level API. If you do not use `VTubeStudio` or want to use it more flexibly, you can try the Low Level API. Here is a demo.
+Quick Start demonstrates a High Level API. If you do not use `VTubeStudio` or want more flexibility, you can try the Low Level API. Below is a demo.
 
 ```python
 import time
@@ -225,6 +225,49 @@ with VowelAnalyser() as a:
     time.sleep(1000000)
 ```
 
+### Interruption During Playback
+
+TTS audio can sometimes be very long, and users need an interrupt signal to make the Agent stop talking. For this, an `interrupt_listening` parameter has been added.<br>
+This parameter accepts a function, and the return value of this function must be `bool`.<br>
+The plugin will check the return value of this function every time it processes a `block_size`. If it returns `True`, the asynchronous thread will end immediately (`a.action_noblock()`), or the synchronous function will return immediately (`a.action_block()`).
+
+```python
+import threading
+import time
+
+from pymouth import VowelAnalyser
+
+
+class Demo:
+    def __init__(self):
+        self.interrupt = False
+
+    def __callback(self, md: dict[str, float], data):
+        pass
+
+    def __listening(self) -> bool:
+        # Time-consuming operations are not recommended here.
+        return self.interrupt
+
+    def interrupt_handler(self):
+        time.sleep(5)  # do something
+        print("interrupt")
+        self.interrupt = True
+
+    def boot(self):
+        threading.Thread(target=self.interrupt_handler).start()
+
+        with VowelAnalyser() as a:
+            a.action_block('zh.wav', 44100,
+                           output_device=3,
+                           callback=self.__callback,
+                           interrupt_listening=self.__listening)
+            print("end")
+
+
+Demo().boot()
+```
+
 ## TODO
 
 - Test case
@@ -236,4 +279,4 @@ with VowelAnalyser() as a:
   https://github.com/itorr/itorr/issues/7
 - https://www.zdaiot.com/DeepLearningApplications/%E8%AF%AD%E9%9F%B3%E5%90%88%E6%88%90/%E8%AF%AD%E9%9F%B3%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/
 - https://huailiang.github.io/blog/2020/mouth/
-- https://zh.wikipedia.org/wiki/%E5%85%B1%E6%8C%AF%E5%B3%B0
+- https://en.wikipedia.org/wiki/Formant
