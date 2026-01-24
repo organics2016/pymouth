@@ -16,7 +16,7 @@ class Demo:
         return self.interrupt
 
     def interrupt_handler(self):
-        time.sleep(5) # do something
+        time.sleep(5)  # do something
         print("interrupt")
         self.interrupt = True
 
@@ -24,11 +24,12 @@ class Demo:
         threading.Thread(target=self.interrupt_handler).start()
 
         with VowelAnalyser() as a:
-            a.action_block('zh.wav', 44100,
-                           output_device=3,
-                           callback=self.__callback,
-                           interrupt_listening=self.__listening)
+            a.action_noblock('zh.wav', 44100,
+                             output_device=3,
+                             callback=self.__callback,
+                             interrupt_listening=self.__listening)
             print("end")
 
 
 Demo().boot()
+time.sleep(100000)

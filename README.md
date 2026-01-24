@@ -232,7 +232,7 @@ with VowelAnalyser() as a:
 ### Interruption During Playback
 
 TTS的音频有时会很长，用户需要一个中断信号让Agent闭嘴。为此添加了一个 `interrupt_listening` 参数。<br>
-这个参数接收一个函数，这个参数的返回值必须是`bool`。<br>
+这个参数接收一个函数，这个函数的返回值必须是`bool`。<br>
 插件会在每处理一个`block_size`时检查这个函数的返回值，如果返回`True`，异步线程会立刻结束(`a.action_noblock()`)
 ，或同步函数立刻返回(`a.action_block()`)。
 
