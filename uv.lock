@@ -506,7 +506,7 @@ source = { editable = "." }
 dependencies = [
     { name = "dtw-python" },
     { name = "librosa" },
-    { name = "pyaudio" },
+    { name = "pyaudio", marker = "sys_platform == 'win32'" },
     { name = "sounddevice" },
     { name = "soundfile" },
     { name = "websockets" },
@@ -516,7 +516,7 @@ dependencies = [
 requires-dist = [
     { name = "dtw-python", specifier = "~=1.7.4" },
     { name = "librosa", specifier = "~=0.11.0" },
-    { name = "pyaudio", specifier = "~=0.2.14" },
+    { name = "pyaudio", marker = "sys_platform == 'win32'", specifier = "~=0.2.14" },
     { name = "sounddevice", specifier = "~=0.5.5" },
     { name = "soundfile", specifier = "~=0.13.1" },
     { name = "websockets", specifier = "~=16.0" },

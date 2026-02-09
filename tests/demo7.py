@@ -1,3 +1,4 @@
+import platform
 import threading
 import time
 
@@ -31,5 +32,6 @@ class Demo:
             print("end")
 
 
+print(platform.system())
 Demo().boot()
 time.sleep(100000)

@@ -18,7 +18,7 @@ dependencies = [
     "soundfile~=0.13.1",
     "websockets~=16.0",
     "dtw-python~=1.7.4",
-    "PyAudio~=0.2.14"
+    "PyAudio~=0.2.14;platform_system == 'Windows'"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
