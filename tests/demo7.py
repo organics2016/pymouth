@@ -25,7 +25,7 @@ class Demo:
 
         with VowelAnalyser() as a:
             a.action_noblock('zh.wav', 44100,
-                             output_device=3,
+                             output_device=4,
                              callback=self.__callback,
                              interrupt_listening=self.__listening)
             print("end")

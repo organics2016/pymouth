@@ -24,6 +24,7 @@ dist-ssr
 
 __pycache__
 venv
+.venv
 
 *.ini
 
